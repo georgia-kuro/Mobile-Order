@@ -229,7 +229,7 @@
                 color: var(--muted);
             }
 
-            /* 確認・完了パネル（これまでのカードUIに寄せる） */
+            /* 確認・完了パネル（カードUI） */
             .panel {
                 background: var(--card);
                 border: 1px solid var(--border);
@@ -348,28 +348,7 @@
                 box-shadow: none;
             }
 
-            /* 完了画面用の下部バー（ボタンのみ・統一デザイン） */
-            .action--single {
-                position: fixed;
-                left: 16px;
-                right: 16px;
-                bottom: max(16px, env(safe-area-inset-bottom));
-                background: var(--card);
-                border: 1px solid var(--border);
-                border-radius: 16px;
-                padding: 10px 12px;
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                gap: 12px;
-                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-                z-index: 50;
-            }
-            .action--single[hidden] {
-                display: none;
-            }
-
-            /* 下スペーサー */
+            /* 下スペーサー（固定バー分の余白） */
             .bottom-spacer {
                 height: calc(
                     var(--action-h) + var(--action-gap) +
@@ -624,8 +603,18 @@
             <button id="submitBtn" class="primary" disabled>注文する</button>
         </div>
 
-        <!-- 完了用 下部バー（「注文画面に戻る」） -->
-        <div class="action--single" id="doneBar" hidden>
+        <!-- 完了用 下部バー（統一デザイン） -->
+        <div
+            class="action"
+            id="doneBar"
+            role="region"
+            aria-label="注文の合計"
+            hidden
+        >
+            <div class="summary" aria-live="polite">
+                <span id="doneCount">0</span> 点 / 合計
+                <span id="doneTotal" data-amount>¥0</span>
+            </div>
             <button id="backToOrderBtn" class="primary" type="button">
                 注文画面に戻る
             </button>
@@ -668,6 +657,8 @@
             const result = document.getElementById("result");
             const countEl = document.getElementById("count");
             const totalEl = document.getElementById("total");
+            const doneCountEl = document.getElementById("doneCount");
+            const doneTotalEl = document.getElementById("doneTotal");
 
             const pad2 = (n) => String(n).padStart(2, "0");
             const AREAS = [
@@ -695,17 +686,19 @@
 
             const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
 
-            // 固定バー高さをCSS変数に反映（隠れ防止）
-            new ResizeObserver(() => {
-                const h =
-                    (ui.stage === "done"
-                        ? doneBar.offsetHeight
-                        : actionBar.offsetHeight) || 80;
+            // 固定バー高さをCSS変数に反映（両バーを監視）
+            const ro1 = new ResizeObserver(updateActionHeight);
+            const ro2 = new ResizeObserver(updateActionHeight);
+            ro1.observe(actionBar);
+            ro2.observe(doneBar);
+            function updateActionHeight() {
+                const visibleBar = ui.stage === "done" ? doneBar : actionBar;
+                const h = visibleBar.offsetHeight || 80;
                 document.documentElement.style.setProperty(
                     "--action-h",
                     h + "px",
                 );
-            }).observe(actionBar);
+            }
 
             function renderMenu(items) {
                 list.innerHTML = "";
@@ -989,7 +982,20 @@
                 closeSeatSheet();
             });
 
+            // ===== ユーティリティ：下端へスクロール =====
+            function scrollToBottomSmooth() {
+                // レイアウト確定後にスクロール
+                requestAnimationFrame(() => {
+                    const bottom = Math.max(
+                        document.documentElement.scrollHeight,
+                        document.body.scrollHeight,
+                    );
+                    window.scrollTo({ top: bottom, behavior: "smooth" });
+                });
+            }
+
             // ===== ステージ切替 =====
+            let lastOrderSnapshot = null; // 完了画面用
             function setStage(next) {
                 ui.stage = next;
 
@@ -1006,10 +1012,11 @@
                     submitBtn.textContent = "注文する";
                     result.textContent = "";
                     result.className = "msg";
+                    updateActionHeight();
                 } else if (next === "confirm") {
                     buildConfirmList();
                     list.hidden = true;
-                    seatField.hidden = false; // 座席は見える方が安心（編集はピッカーで）
+                    seatField.hidden = false; // 座席は表示（安心感）
                     confirmPanel.hidden = false;
                     donePanel.hidden = true;
                     actionBar.hidden = false;
@@ -1018,7 +1025,8 @@
                     submitBtn.textContent = "注文する";
                     result.textContent = "";
                     result.className = "msg";
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    updateActionHeight();
+                    scrollToBottomSmooth(); // 下端へ
                 } else if (next === "done") {
                     buildDoneList();
                     list.hidden = true;
@@ -1029,18 +1037,10 @@
                     doneBar.hidden = false;
                     result.textContent = "";
                     result.className = "msg";
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    fillDoneBarSummary();
+                    updateActionHeight();
+                    scrollToBottomSmooth(); // 下端へ
                 }
-
-                // 下部バー高さを再計算
-                const h =
-                    (ui.stage === "done"
-                        ? doneBar.offsetHeight
-                        : actionBar.offsetHeight) || 80;
-                document.documentElement.style.setProperty(
-                    "--action-h",
-                    h + "px",
-                );
             }
 
             function buildConfirmList() {
@@ -1071,7 +1071,6 @@
                 confirmList.append(sum);
             }
 
-            let lastOrderSnapshot = null;
             function buildDoneList() {
                 const items = lastOrderSnapshot?.items || [];
                 doneList.innerHTML = "";
@@ -1100,6 +1099,14 @@
                 doneList.append(sum);
             }
 
+            function fillDoneBarSummary() {
+                const items = lastOrderSnapshot?.items || [];
+                const count = items.reduce((s, x) => s + x.quantity, 0);
+                const total = items.reduce((s, x) => s + x.total, 0);
+                doneCountEl.textContent = count;
+                doneTotalEl.textContent = yen(total);
+            }
+
             // 送信フロー（2段階）
             submitBtn.addEventListener("click", () => {
                 const items = collectOrderDetailed();
@@ -1121,7 +1128,7 @@
                         });
                         return;
                     }
-                    setStage("confirm");
+                    setStage("confirm"); // 1回目：確認画面へ（下へスクロール）
                     return;
                 }
 
@@ -1156,7 +1163,7 @@
                                 if (b.textContent === "−") b.disabled = true;
                             });
                             updateSummary();
-                            setStage("done");
+                            setStage("done"); // 2回目：完了画面へ（下へスクロール）
                         })
                         .catch((err) => {
                             result.textContent =
@@ -1171,11 +1178,12 @@
                 }
             });
 
-            // 完了→注文に戻る（UI統一：プライマリボタン）
+            // 完了→注文に戻る（統一デザインのバー右側ボタン）
             backToOrderBtn.addEventListener("click", () => {
                 lastOrderSnapshot = null;
                 setStage("build"); // 座席は保持（運用上便利）
-                window.scrollTo({ top: 0, behavior: "smooth" });
+                // 戻った直後は一番上に戻すより、直近の操作位置に近い下部を保つ
+                scrollToBottomSmooth();
             });
 
             // 初期ステージ
