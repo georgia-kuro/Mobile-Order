@@ -62,6 +62,8 @@
             }
             body.no-scroll {
                 overflow: hidden; /* モーダル表示中は本体スクロールを抑止 */
+                overscroll-behavior: none;
+                touch-action: none;
             }
             .container {
                 width: 100%;
@@ -71,6 +73,24 @@
                 flex-direction: column;
                 gap: 16px;
             }
+            /* ヘッダー右上にクレジットを配置 */
+            .app-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+            .app-title {
+                min-width: 0;
+            }
+            .credit--header {
+                margin: 0;
+            }
+            .credit--header .credit__pill {
+                margin: 0;
+            }
+
             h1 {
                 margin: 0;
                 font-size: clamp(18px, 4.5vw, 22px);
@@ -350,6 +370,9 @@
             .sheet[hidden] {
                 display: none;
             }
+            .sheet--open {
+                pointer-events: auto;
+            }
             .sheet__backdrop {
                 position: absolute;
                 inset: 0;
@@ -612,10 +635,16 @@
     </head>
     <body>
         <div class="container">
-            <header>
-                <div>
+            <header class="app-header">
+                <div class="app-title">
                     <h1>ご注文</h1>
                     <div class="sub">数量を入力して「注文する」をタップ</div>
+                </div>
+                <div class="credit credit--header" aria-label="開発クレジット">
+                    <span class="credit__pill">
+                        <span class="credit__mark" aria-hidden="true">⌁</span>
+                        Powered by ICT-PARK
+                    </span>
                 </div>
             </header>
 
@@ -649,7 +678,7 @@
                 </div>
             </div>
 
-            <!-- 履歴＋クレジット（間隔を詰めて表示） -->
+            <!-- 履歴（クレジットはヘッダーへ移動） -->
             <div class="after-seat">
                 <button
                     id="historyOpen"
@@ -660,12 +689,6 @@
                 >
                     注文履歴
                 </button>
-                <div class="credit" aria-label="開発クレジット">
-                    <span class="credit__pill">
-                        <span class="credit__mark" aria-hidden="true">⌁</span>
-                        Powered by ICT-PARK
-                    </span>
-                </div>
             </div>
 
             <div id="result" class="msg" aria-live="polite"></div>
@@ -1036,7 +1059,9 @@
                             setQty((parseInt(input.value || "0", 10) || 0) - 1),
                         );
                         plus.addEventListener("click", () =>
-                            setQty((parseInt(input.value || "0", 10) || 0) + 1),
+                            setQty(
+                                (parseInt(input.value || "0", 10, 10) || 0) + 1,
+                            ),
                         );
                         input.addEventListener("input", () =>
                             setQty(input.value),
@@ -1121,6 +1146,7 @@
             let activeSheet = null;
             let activeTrigger = null;
             let keydownHandler = null;
+            let scrollFreezeY = 0;
 
             function getFocusableElements(container) {
                 return Array.from(
@@ -1137,11 +1163,18 @@
                 activeSheet = sheet;
                 activeTrigger = triggerEl || null;
 
+                // 背景スクロール完全固定（iOS含む）
+                scrollFreezeY =
+                    window.scrollY || document.documentElement.scrollTop || 0;
+                document.body.style.top = `-${scrollFreezeY}px`;
+                document.body.style.position = "fixed";
+                document.body.style.width = "100%";
+                document.body.classList.add("no-scroll");
+
                 sheet.hidden = false;
                 sheet.setAttribute("aria-hidden", "false");
                 requestAnimationFrame(() => {
                     sheet.classList.add("sheet--open");
-                    document.body.classList.add("no-scroll");
 
                     // フォーカス移動
                     const target =
@@ -1193,7 +1226,15 @@
                 if (!sheet) return;
                 sheet.classList.remove("sheet--open");
                 sheet.setAttribute("aria-hidden", "true");
+
+                // 背景スクロール復元
                 document.body.classList.remove("no-scroll");
+                const y = scrollFreezeY || 0;
+                document.body.style.position = "";
+                document.body.style.top = "";
+                document.body.style.width = "";
+                window.scrollTo(0, y);
+
                 setTimeout(() => {
                     sheet.hidden = true;
                 }, 200);
