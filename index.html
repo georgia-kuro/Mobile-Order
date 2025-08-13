@@ -19,8 +19,8 @@
                 --action-gap: 24px;
 
                 /* ピッカー用 */
-                --row: 44px;         /* 1行の高さ（iOSに近い） */
-                --wheel-h: 220px;    /* ホイールの表示高さ */
+                --row: 44px;
+                --wheel-h: 220px;
                 --sheet-radius: 16px;
             }
             * {
@@ -77,6 +77,18 @@
                 font-size: 0.92rem;
             }
 
+            /* お知らせ */
+            .notice {
+                background: #fff7ed;
+                color: #9a3412;
+                border: 1px solid #fed7aa;
+                border-radius: 12px;
+                padding: 10px 12px;
+            }
+            .notice[hidden] {
+                display: none;
+            }
+
             /* 商品リスト */
             .list {
                 display: flex;
@@ -92,6 +104,9 @@
                 border: 1px solid var(--border);
                 border-radius: 12px;
                 padding: 12px;
+            }
+            .item--soldout {
+                opacity: 0.85;
             }
             .info {
                 min-width: 0;
@@ -109,6 +124,20 @@
             }
             .price {
                 font-weight: 800;
+            }
+
+            /* 売切れバッジ */
+            .sold {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 12px;
+                border-radius: 999px;
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+                font-weight: 800;
+                white-space: nowrap;
             }
 
             /* ステッパー */
@@ -145,7 +174,7 @@
                 cursor: not-allowed;
             }
 
-            /* 数値入力（スピナー非表示） */
+            /* 数値入力 */
             .num {
                 width: 76px;
                 min-height: 44px;
@@ -259,7 +288,7 @@
                 box-shadow: none;
             }
 
-            /* 下スペーサー（固定バーに隠れないよう確保） */
+            /* 下スペーサー */
             .bottom-spacer {
                 height: calc(
                     var(--action-h) + var(--action-gap) +
@@ -272,7 +301,7 @@
                 position: fixed;
                 inset: 0;
                 z-index: 100;
-                pointer-events: none; /* 非表示時の誤タップ防止 */
+                pointer-events: none;
             }
             .sheet[hidden] {
                 display: none;
@@ -300,7 +329,7 @@
                 display: grid;
                 grid-template-rows: auto auto auto;
                 gap: 0;
-                pointer-events: auto; /* シート内は操作可 */
+                pointer-events: auto;
             }
             .sheet--open .sheet__backdrop {
                 opacity: 1;
@@ -342,7 +371,7 @@
             .wheel {
                 position: relative;
                 height: var(--wheel-h);
-                overflow: hidden; /* リストは親でマスク */
+                overflow: hidden;
                 border: 1px solid var(--border);
                 border-radius: 12px;
                 background: #fff;
@@ -369,7 +398,6 @@
                 font-weight: 800;
                 color: var(--accent);
             }
-            /* 中央の選択ライン（両列共通の目安線） */
             .indicator {
                 position: absolute;
                 left: 14px;
@@ -389,7 +417,6 @@
                 gap: 8px;
                 border-top: 1px solid var(--border);
             }
-
             .no-scroll {
                 overflow: hidden;
                 touch-action: none;
@@ -405,7 +432,9 @@
                 </div>
             </header>
 
-        <div id="list" class="list" aria-live="polite">読み込み中…</div>
+            <div id="notice" class="notice" hidden aria-live="polite"></div>
+
+            <div id="list" class="list" aria-live="polite">読み込み中…</div>
 
             <div class="field">
                 <label for="seatOpen">座席番号</label>
@@ -443,7 +472,12 @@
                         <button id="seatClear" class="btn--ghost" type="button">
                             クリア
                         </button>
-                        <button id="seatDone" class="primary" type="button" disabled>
+                        <button
+                            id="seatDone"
+                            class="primary"
+                            type="button"
+                            disabled
+                        >
                             完了
                         </button>
                     </div>
@@ -458,7 +492,9 @@
                     <div class="indicator" aria-hidden="true"></div>
                 </div>
                 <div class="sheet__footer">
-                    <button id="seatCancel" class="btn--ghost" type="button">閉じる</button>
+                    <button id="seatCancel" class="btn--ghost" type="button">
+                        閉じる
+                    </button>
                 </div>
             </div>
         </div>
@@ -479,13 +515,14 @@
         <script>
             const API_BASE =
                 "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
+
             const list = document.getElementById("list");
+            const notice = document.getElementById("notice");
 
             const seatEl = document.getElementById("seat");
             const seatOpen = document.getElementById("seatOpen");
             const seatDisplay = document.getElementById("seatDisplay");
 
-            // シート関連
             const seatSheet = document.getElementById("seatSheet");
             const sheetBackdrop = document.getElementById("sheetBackdrop");
             const seatDone = document.getElementById("seatDone");
@@ -501,17 +538,29 @@
             const totalEl = document.getElementById("total");
 
             const pad2 = (n) => String(n).padStart(2, "0");
-            const AREAS = ["A","B","C","D","E","F","G","H","I","J","K"];
-            const NUMS = Array.from({ length: 21 }, (_, i) => pad2(i + 1)); // "01"〜"21"
+            const AREAS = [
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+            ];
+            const NUMS = Array.from({ length: 21 }, (_, i) => pad2(i + 1));
 
-            const ROW_H = 44; // px（CSSの --row と合わせる）
+            const ROW_H = 44;
             let tmpArea = null;
             let tmpNum = null;
-            let scrollTimers = new Map(); // デバウンス用
+            let scrollTimers = new Map();
 
             const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
 
-            // 固定バー高さをCSS変数に反映（隠れ防止）
+            // 固定バー高さをCSS変数に反映
             new ResizeObserver(() => {
                 const h = actionBar.offsetHeight || 80;
                 document.documentElement.style.setProperty(
@@ -522,6 +571,9 @@
 
             function renderMenu(items) {
                 list.innerHTML = "";
+                notice.hidden = true;
+                notice.textContent = "";
+
                 if (!items || !items.length) {
                     const div = document.createElement("div");
                     div.className = "msg";
@@ -530,58 +582,87 @@
                     submitBtn.disabled = true;
                     return;
                 }
+
+                const anyActive = items.some((it) => !!it.active);
+                if (!anyActive) {
+                    notice.hidden = false;
+                    notice.textContent =
+                        "モバイルオーダーは試合開始後に受け付けます。";
+                }
+
                 for (const it of items) {
                     const row = document.createElement("div");
-                    row.className = "item";
+                    row.className =
+                        "item" + (it.active ? "" : " item--soldout");
                     row.dataset.itemId = it.id;
                     row.dataset.price = it.price;
+                    row.dataset.active = String(!!it.active);
 
                     const info = document.createElement("div");
                     info.className = "info";
                     info.innerHTML = `<div class="name">${it.name}</div>
-                      <div class="meta"><span class="price">${yen(it.price)}</span>（税込）</div>`;
+            <div class="meta"><span class="price">${yen(it.price)}</span>（税込）</div>`;
 
-                    const stepper = document.createElement("div");
-                    stepper.className = "stepper";
+                    const right = document.createElement("div");
 
-                    const minus = document.createElement("button");
-                    minus.type = "button";
-                    minus.className = "btn";
-                    minus.textContent = "−";
-                    minus.setAttribute("aria-label", it.name + " を1つ減らす");
-                    minus.disabled = true;
+                    if (it.active) {
+                        const stepper = document.createElement("div");
+                        stepper.className = "stepper";
 
-                    const input = document.createElement("input");
-                    input.className = "num";
-                    input.type = "number";
-                    input.min = "0";
-                    input.step = "1";
-                    input.value = "0";
-                    input.inputMode = "numeric";
-                    input.setAttribute("aria-label", it.name + " の数量");
+                        const minus = document.createElement("button");
+                        minus.type = "button";
+                        minus.className = "btn";
+                        minus.textContent = "−";
+                        minus.setAttribute(
+                            "aria-label",
+                            it.name + " を1つ減らす",
+                        );
+                        minus.disabled = true;
 
-                    const plus = document.createElement("button");
-                    plus.type = "button";
-                    plus.className = "btn";
-                    plus.textContent = "+";
-                    plus.setAttribute("aria-label", it.name + " を1つ増やす");
+                        const input = document.createElement("input");
+                        input.className = "num";
+                        input.type = "number";
+                        input.min = "0";
+                        input.step = "1";
+                        input.value = "0";
+                        input.inputMode = "numeric";
+                        input.setAttribute("aria-label", it.name + " の数量");
 
-                    const setQty = (v) => {
-                        v = Math.max(0, parseInt(v || "0", 10) || 0);
-                        input.value = String(v);
-                        minus.disabled = v <= 0;
-                        updateSummary();
-                    };
-                    minus.addEventListener("click", () =>
-                        setQty(parseInt(input.value || "0", 10) - 1),
-                    );
-                    plus.addEventListener("click", () =>
-                        setQty(parseInt(input.value || "0", 10) + 1),
-                    );
-                    input.addEventListener("input", () => setQty(input.value));
+                        const plus = document.createElement("button");
+                        plus.type = "button";
+                        plus.className = "btn";
+                        plus.textContent = "+";
+                        plus.setAttribute(
+                            "aria-label",
+                            it.name + " を1つ増やす",
+                        );
 
-                    stepper.append(minus, input, plus);
-                    row.append(info, stepper);
+                        const setQty = (v) => {
+                            v = Math.max(0, parseInt(v || "0", 10) || 0);
+                            input.value = String(v);
+                            minus.disabled = v <= 0;
+                            updateSummary();
+                        };
+                        minus.addEventListener("click", () =>
+                            setQty(parseInt(input.value || "0", 10) - 1),
+                        );
+                        plus.addEventListener("click", () =>
+                            setQty(parseInt(input.value || "0", 10) + 1),
+                        );
+                        input.addEventListener("input", () =>
+                            setQty(input.value),
+                        );
+
+                        stepper.append(minus, input, plus);
+                        right.append(stepper);
+                    } else {
+                        const sold = document.createElement("span");
+                        sold.className = "sold";
+                        sold.textContent = "売切れ";
+                        right.append(sold);
+                    }
+
+                    row.append(info, right);
                     list.append(row);
                 }
                 updateSummary();
@@ -590,16 +671,19 @@
             function collectOrder() {
                 const items = [];
                 list.querySelectorAll(".item").forEach((r) => {
+                    const active = r.dataset.active === "true";
+                    if (!active) return;
                     const qty = parseInt(
                         r.querySelector(".num").value || "0",
                         10,
                     );
-                    if (qty > 0)
+                    if (qty > 0) {
                         items.push({
                             itemId: r.dataset.itemId,
                             quantity: qty,
                             price: Number(r.dataset.price),
                         });
+                    }
                 });
                 return items;
             }
@@ -645,23 +729,28 @@
             }
             function nearestIndex(el) {
                 const t = el.scrollTop;
-                return Math.max(0, Math.min(
-                    el.children.length - 1,
-                    Math.round(t / ROW_H)
-                ));
+                return Math.max(
+                    0,
+                    Math.min(el.children.length - 1, Math.round(t / 44)),
+                );
             }
             function scrollToIndex(el, index, behavior = "smooth") {
-                el.scrollTo({ top: index * ROW_H, behavior });
+                el.scrollTo({ top: index * 44, behavior });
             }
             function handleScroll(el, onChange) {
-                // デバウンスして停止時にスナップ補正
                 if (scrollTimers.get(el)) clearTimeout(scrollTimers.get(el));
                 const idx = nearestIndex(el);
                 setSelectedClass(el, idx);
-                scrollTimers.set(el, setTimeout(() => {
-                    scrollToIndex(el, nearestIndex(el), "smooth");
-                    if (onChange) onChange(el.children[nearestIndex(el)].dataset.value);
-                }, 80));
+                scrollTimers.set(
+                    el,
+                    setTimeout(() => {
+                        scrollToIndex(el, nearestIndex(el), "smooth");
+                        if (onChange)
+                            onChange(
+                                el.children[nearestIndex(el)].dataset.value,
+                            );
+                    }, 80),
+                );
             }
             function initWheel(el, values, currentValue, onChange) {
                 makeWheelItems(el, values);
@@ -670,11 +759,14 @@
                     const i = values.indexOf(currentValue);
                     if (i >= 0) startIdx = i;
                 }
-                // 初期位置へ（瞬時）
                 scrollToIndex(el, startIdx, "auto");
                 setSelectedClass(el, startIdx);
                 if (onChange) onChange(values[startIdx]);
-                el.addEventListener("scroll", () => handleScroll(el, onChange), { passive: true });
+                el.addEventListener(
+                    "scroll",
+                    () => handleScroll(el, onChange),
+                    { passive: true },
+                );
                 el.addEventListener("click", (e) => {
                     const item = e.target.closest(".wheel__item");
                     if (!item) return;
@@ -686,19 +778,17 @@
             }
 
             function openSeatSheet() {
-                // 現在値を分解
                 const cur = seatEl.value.trim();
-                let curA = null, curN = null;
-                const m = /^([A-K])\-(\d{1,2})$/.exec(cur);
+                let curA = null,
+                    curN = null;
+                const m = /^([A-K])\-(\d{2})$/.exec(cur);
                 if (m) {
                     curA = m[1];
-                    const n = Math.max(1, Math.min(21, parseInt(m[2], 10)));
-                    curN = pad2(n);
+                    curN = m[2];
                 }
                 tmpArea = curA || AREAS[0];
                 tmpNum = curN || NUMS[0];
 
-                // 初期化（既にイベントが付いていてもOK）
                 initWheel(wheelArea, AREAS, tmpArea, (v) => {
                     tmpArea = v;
                     seatDone.disabled = !(tmpArea && tmpNum);
@@ -710,9 +800,7 @@
 
                 seatDone.disabled = !(tmpArea && tmpNum);
 
-                // 表示
                 seatSheet.hidden = false;
-                // アニメーション適用のため次フレームでクラス付与
                 requestAnimationFrame(() => {
                     seatSheet.classList.add("sheet--open");
                     document.body.classList.add("no-scroll");
@@ -738,7 +826,6 @@
                 seatDisplay.classList.add("muted");
                 seatDone.disabled = true;
                 updateSummary();
-                // ホイールは先頭へ
                 scrollToIndex(wheelArea, 0, "smooth");
                 setSelectedClass(wheelArea, 0);
                 scrollToIndex(wheelNum, 0, "smooth");
