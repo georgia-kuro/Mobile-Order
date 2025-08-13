@@ -231,6 +231,17 @@
             .input-like:focus-visible {
                 box-shadow: var(--ring);
             }
+            /* 座席エラー表示用の装飾 */
+            .input-like--error {
+                border-color: #ef4444;
+                box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.12);
+            }
+            .field-error {
+                color: #b91c1c; /* 赤字 */
+                font-size: 0.92rem;
+                margin-top: 4px;
+            }
+
             .muted {
                 color: var(--muted);
             }
@@ -594,6 +605,16 @@
                     <span id="seatDisplay" class="muted">座席を選択</span>
                 </button>
                 <input id="seat" type="hidden" />
+                <!-- 座席未入力時のエラー表示（赤字） -->
+                <div
+                    id="seatError"
+                    class="field-error"
+                    role="alert"
+                    aria-live="polite"
+                    hidden
+                >
+                    座席番号を選択してください。
+                </div>
             </div>
 
             <!-- 注文履歴リンク（弱い見出し扱い。上下余白を確保） -->
@@ -790,6 +811,8 @@
             const seatEl = document.getElementById("seat");
             const seatOpen = document.getElementById("seatOpen");
             const seatDisplay = document.getElementById("seatDisplay");
+            const seatError = document.getElementById("seatError");
+            const seatField = document.getElementById("seatField");
 
             // 座席シート
             const seatSheet = document.getElementById("seatSheet");
@@ -1049,6 +1072,10 @@
                 totalEl.textContent = yen(total);
                 // 座席未入力でもクリックできる（警告表示のため）
                 submitBtn.disabled = count === 0;
+                // 数量が0ならエラーは隠す（操作の誘導を減らすため）
+                if (count === 0) {
+                    hideSeatError();
+                }
             }
 
             /* シート開閉とアクセシビリティ：フォーカス保持・トラップ・Esc対応 */
@@ -1266,9 +1293,26 @@
                 try {
                     localStorage.setItem(LAST_SEAT_KEY, seatStr);
                 } catch (e) {}
+                hideSeatError();
                 updateSummary();
                 closeSeatSheet();
             });
+
+            function showSeatError() {
+                seatError.hidden = false;
+                seatOpen.classList.add("input-like--error");
+                // 視線誘導：座席UIへスクロール
+                seatField.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
+                // フォーカス
+                seatOpen.focus();
+            }
+            function hideSeatError() {
+                seatError.hidden = true;
+                seatOpen.classList.remove("input-like--error");
+            }
 
             /* サマリー構築（確認/完了で共用） */
             function buildSummary(container, snapshotItems) {
@@ -1406,19 +1450,16 @@
                 if (!items.length) {
                     resultMsg.textContent = "数量を入力してください。";
                     resultMsg.className = "msg msg--error";
+                    hideSeatError();
                     return;
                 }
                 if (!seat) {
-                    resultMsg.textContent = "座席番号を選択してください。";
-                    resultMsg.className = "msg msg--error";
-                    seatOpen.focus();
-                    seatOpen.scrollIntoView({
-                        behavior: "smooth",
-                        block: "center",
-                    });
+                    // ここで座席エラーを座席UIの近くに赤字で表示
+                    showSeatError();
                     return;
                 }
 
+                hideSeatError();
                 confirmSeat.textContent = seat ? `座席 ${seat}` : "";
                 buildSummary(confirmList);
                 confirmOk.disabled = false;
