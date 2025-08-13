@@ -19,8 +19,8 @@
                 --action-gap: 24px;
 
                 /* ピッカー用 */
-                --row: 44px; /* 1行の高さ（iOSに近い） */
-                --wheel-h: 220px; /* ホイールの表示高さ */
+                --row: 44px;         /* 1行の高さ（iOSに近い） */
+                --wheel-h: 220px;    /* ホイールの表示高さ */
                 --sheet-radius: 16px;
             }
             * {
@@ -405,7 +405,7 @@
                 </div>
             </header>
 
-            <div id="list" class="list" aria-live="polite">読み込み中…</div>
+        <div id="list" class="list" aria-live="polite">読み込み中…</div>
 
             <div class="field">
                 <label for="seatOpen">座席番号</label>
@@ -443,12 +443,7 @@
                         <button id="seatClear" class="btn--ghost" type="button">
                             クリア
                         </button>
-                        <button
-                            id="seatDone"
-                            class="primary"
-                            type="button"
-                            disabled
-                        >
+                        <button id="seatDone" class="primary" type="button" disabled>
                             完了
                         </button>
                     </div>
@@ -463,9 +458,7 @@
                     <div class="indicator" aria-hidden="true"></div>
                 </div>
                 <div class="sheet__footer">
-                    <button id="seatCancel" class="btn--ghost" type="button">
-                        閉じる
-                    </button>
+                    <button id="seatCancel" class="btn--ghost" type="button">閉じる</button>
                 </div>
             </div>
         </div>
@@ -507,20 +500,9 @@
             const countEl = document.getElementById("count");
             const totalEl = document.getElementById("total");
 
-            const AREAS = [
-                "A",
-                "B",
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "H",
-                "I",
-                "J",
-                "K",
-            ];
-            const NUMS = Array.from({ length: 21 }, (_, i) => String(i + 1));
+            const pad2 = (n) => String(n).padStart(2, "0");
+            const AREAS = ["A","B","C","D","E","F","G","H","I","J","K"];
+            const NUMS = Array.from({ length: 21 }, (_, i) => pad2(i + 1)); // "01"〜"21"
 
             const ROW_H = 44; // px（CSSの --row と合わせる）
             let tmpArea = null;
@@ -646,7 +628,7 @@
             // ===== iOS風ローラーピッカー =====
             function makeWheelItems(el, values) {
                 el.innerHTML = "";
-                values.forEach((v, i) => {
+                values.forEach((v) => {
                     const d = document.createElement("div");
                     d.className = "wheel__item";
                     d.dataset.value = v;
@@ -663,10 +645,10 @@
             }
             function nearestIndex(el) {
                 const t = el.scrollTop;
-                return Math.max(
-                    0,
-                    Math.min(el.children.length - 1, Math.round(t / ROW_H)),
-                );
+                return Math.max(0, Math.min(
+                    el.children.length - 1,
+                    Math.round(t / ROW_H)
+                ));
             }
             function scrollToIndex(el, index, behavior = "smooth") {
                 el.scrollTo({ top: index * ROW_H, behavior });
@@ -676,16 +658,10 @@
                 if (scrollTimers.get(el)) clearTimeout(scrollTimers.get(el));
                 const idx = nearestIndex(el);
                 setSelectedClass(el, idx);
-                scrollTimers.set(
-                    el,
-                    setTimeout(() => {
-                        scrollToIndex(el, nearestIndex(el), "smooth");
-                        if (onChange)
-                            onChange(
-                                el.children[nearestIndex(el)].dataset.value,
-                            );
-                    }, 80),
-                );
+                scrollTimers.set(el, setTimeout(() => {
+                    scrollToIndex(el, nearestIndex(el), "smooth");
+                    if (onChange) onChange(el.children[nearestIndex(el)].dataset.value);
+                }, 80));
             }
             function initWheel(el, values, currentValue, onChange) {
                 makeWheelItems(el, values);
@@ -698,11 +674,7 @@
                 scrollToIndex(el, startIdx, "auto");
                 setSelectedClass(el, startIdx);
                 if (onChange) onChange(values[startIdx]);
-                el.addEventListener(
-                    "scroll",
-                    () => handleScroll(el, onChange),
-                    { passive: true },
-                );
+                el.addEventListener("scroll", () => handleScroll(el, onChange), { passive: true });
                 el.addEventListener("click", (e) => {
                     const item = e.target.closest(".wheel__item");
                     if (!item) return;
@@ -716,14 +688,12 @@
             function openSeatSheet() {
                 // 現在値を分解
                 const cur = seatEl.value.trim();
-                let curA = null,
-                    curN = null;
+                let curA = null, curN = null;
                 const m = /^([A-K])\-(\d{1,2})$/.exec(cur);
                 if (m) {
                     curA = m[1];
-                    curN = String(
-                        Math.max(1, Math.min(21, parseInt(m[2], 10))),
-                    );
+                    const n = Math.max(1, Math.min(21, parseInt(m[2], 10)));
+                    curN = pad2(n);
                 }
                 tmpArea = curA || AREAS[0];
                 tmpNum = curN || NUMS[0];
@@ -777,7 +747,7 @@
 
             seatDone.addEventListener("click", () => {
                 if (!(tmpArea && tmpNum)) return;
-                const seatStr = `${tmpArea}-${tmpNum}`;
+                const seatStr = `${tmpArea}-${tmpNum}`; // 例: A-02
                 seatEl.value = seatStr;
                 seatDisplay.textContent = `座席 ${seatStr}`;
                 seatDisplay.classList.remove("muted");
