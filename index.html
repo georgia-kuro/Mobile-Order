@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,viewport-fit=cover"
+        />
+        <title>モバイルオーダー（注文）</title>
+        <style>
+            /* 既存UIを簡略（必要に応じて調整） */
+            body {
+                margin: 0;
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    "Helvetica Neue",
+                    Arial,
+                    sans-serif;
+                background: #f7f7fb;
+                color: #121826;
+            }
+            .container {
+                max-width: 640px;
+                margin: 0 auto;
+                padding: 16px;
+            }
+            .list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .item {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 8px 12px;
+                align-items: center;
+                background: #fff;
+                border: 1px solid #e6e7ec;
+                border-radius: 12px;
+                padding: 12px;
+            }
+            .name {
+                font-weight: 700;
+            }
+            .meta {
+                color: #6b7280;
+            }
+            .stepper {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .btn {
+                width: 44px;
+                height: 44px;
+                border-radius: 999px;
+                border: 1px solid #e6e7ec;
+                background: #fff;
+                cursor: pointer;
+            }
+            .num {
+                width: 76px;
+                min-height: 44px;
+                text-align: center;
+                border: 1px solid #e6e7ec;
+                border-radius: 10px;
+            }
+            .field {
+                margin-top: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .input {
+                min-height: 44px;
+                border: 1px solid #e6e7ec;
+                border-radius: 10px;
+                padding: 12px 14px;
+            }
+            .action {
+                position: fixed;
+                left: 16px;
+                right: 16px;
+                bottom: 16px;
+                background: #fff;
+                border: 1px solid #e6e7ec;
+                border-radius: 16px;
+                padding: 10px 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .primary {
+                background: #2563eb;
+                color: #fff;
+                border: none;
+                min-height: 44px;
+                padding: 0 16px;
+                border-radius: 999px;
+                cursor: pointer;
+            }
+            .msg {
+                margin-top: 8px;
+                color: #6b7280;
+            }
+            .msg--error {
+                color: #dc2626;
+            }
+            .msg--ok {
+                color: #047857;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>ご注文</h1>
+            <div id="list" class="list">読み込み中…</div>
+
+            <div class="field">
+                <label for="seat">座席番号</label>
+                <input
+                    id="seat"
+                    class="input"
+                    type="text"
+                    placeholder="例：A-12"
+                    required
+                />
+            </div>
+
+            <div id="result" class="msg" aria-live="polite"></div>
+        </div>
+
+        <div class="action" role="region" aria-label="注文の合計">
+            <div>
+                <span id="count">0</span> 点 / 合計 <span id="total">¥0</span>
+            </div>
+            <button id="submitBtn" class="primary" disabled>注文する</button>
+        </div>
+
+        <script>
+            const API_BASE =
+                "https://script.google.com/macros/s/XXXXXXXXXXXXXXXX/exec";
+            const list = document.getElementById("list");
+            const seatEl = document.getElementById("seat");
+            const submitBtn = document.getElementById("submitBtn");
+            const result = document.getElementById("result");
+            const countEl = document.getElementById("count");
+            const totalEl = document.getElementById("total");
+
+            const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
+
+            function renderMenu(items) {
+                list.innerHTML = "";
+                if (!items || !items.length) {
+                    list.textContent = "現在ご注文いただける商品がありません。";
+                    submitBtn.disabled = true;
+                    return;
+                }
+                for (const it of items) {
+                    const row = document.createElement("div");
+                    row.className = "item";
+                    row.dataset.itemId = it.id;
+                    row.dataset.price = it.price;
+
+                    const left = document.createElement("div");
+                    left.innerHTML = `<div class="name">${it.name}</div><div class="meta">${yen(it.price)}（税込）</div>`;
+
+                    const stepper = document.createElement("div");
+                    stepper.className = "stepper";
+                    const minus = document.createElement("button");
+                    minus.className = "btn";
+                    minus.textContent = "−";
+                    minus.disabled = true;
+                    const num = document.createElement("input");
+                    num.className = "num";
+                    num.type = "number";
+                    num.value = "0";
+                    num.min = "0";
+                    num.step = "1";
+                    const plus = document.createElement("button");
+                    plus.className = "btn";
+                    plus.textContent = "+";
+
+                    const setQty = (v) => {
+                        v = Math.max(0, v | 0);
+                        num.value = String(v);
+                        minus.disabled = v <= 0;
+                        updateSummary();
+                    };
+                    minus.onclick = () => setQty(parseInt(num.value, 10) - 1);
+                    plus.onclick = () => setQty(parseInt(num.value, 10) + 1);
+                    num.oninput = () => setQty(parseInt(num.value || "0", 10));
+
+                    stepper.append(minus, num, plus);
+                    row.append(left, stepper);
+                    list.append(row);
+                }
+                updateSummary();
+            }
+
+            function collectOrder() {
+                const items = [];
+                list.querySelectorAll(".item").forEach((r) => {
+                    const qty = parseInt(
+                        r.querySelector(".num").value || "0",
+                        10,
+                    );
+                    if (qty > 0)
+                        items.push({
+                            itemId: r.dataset.itemId,
+                            quantity: qty,
+                            price: Number(r.dataset.price),
+                        });
+                });
+                return items;
+            }
+            function updateSummary() {
+                const items = collectOrder();
+                const count = items.reduce((s, x) => s + x.quantity, 0);
+                const total = items.reduce(
+                    (s, x) => s + x.quantity * x.price,
+                    0,
+                );
+                countEl.textContent = count;
+                totalEl.textContent = yen(total);
+                submitBtn.disabled = count === 0 || !seatEl.value.trim();
+            }
+            seatEl.addEventListener("input", updateSummary);
+
+            // メニュー取得
+            fetch(`${API_BASE}?action=menu`)
+                .then((r) => r.json())
+                .then((data) => renderMenu(data.menu || []))
+                .catch(() => {
+                    list.textContent = "メニュー読み込みに失敗しました。";
+                });
+
+            // 注文送信（Content-Type: text/plain でプリフライト回避）
+            submitBtn.addEventListener("click", () => {
+                const items = collectOrder();
+                const seat = seatEl.value.trim();
+                if (!items.length) {
+                    result.textContent = "数量を入力してください。";
+                    result.className = "msg msg--error";
+                    return;
+                }
+                if (!seat) {
+                    result.textContent = "座席番号を入力してください。";
+                    result.className = "msg msg--error";
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.textContent = "送信中…";
+                result.textContent = "";
+                result.className = "msg";
+                fetch(`${API_BASE}?action=order`, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=UTF-8" },
+                    body: JSON.stringify({ seat, items }),
+                })
+                    .then((r) => r.json())
+                    .then((res) => {
+                        if (!res.ok) throw new Error(res.error || "failed");
+                        result.textContent = `注文を受け付けました。注文ID: ${res.groupId}（${res.totalQuantity}点 / 合計 ${yen(res.totalAmount)}）`;
+                        result.className = "msg msg--ok";
+                        document
+                            .querySelectorAll(".num")
+                            .forEach((i) => (i.value = "0"));
+                        document.querySelectorAll(".btn").forEach((b) => {
+                            if (b.textContent === "−") b.disabled = true;
+                        });
+                        updateSummary();
+                    })
+                    .catch((err) => {
+                        result.textContent =
+                            "送信に失敗しました：" +
+                            ((err && err.message) || String(err));
+                        result.className = "msg msg--error";
+                    })
+                    .finally(() => {
+                        submitBtn.textContent = "注文する";
+                        submitBtn.disabled = false;
+                    });
+            });
+        </script>
+    </body>
+</html>
