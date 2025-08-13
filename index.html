@@ -52,16 +52,14 @@
                 -webkit-text-size-adjust: 100%;
                 -webkit-tap-highlight-color: transparent;
                 padding: 0 16px 16px;
-                padding-top: calc(
-                    16px + env(safe-area-inset-top)
-                ); /* Safe Area 上側も考慮 */
+                padding-top: calc(16px + env(safe-area-inset-top));
                 line-height: 1.5;
                 font-feature-settings:
                     "tnum" 1,
                     "cv01" 1;
             }
             body.no-scroll {
-                overflow: hidden; /* モーダル表示中は本体スクロールを抑止 */
+                overflow: hidden;
                 overscroll-behavior: none;
                 touch-action: none;
             }
@@ -73,22 +71,25 @@
                 flex-direction: column;
                 gap: 16px;
             }
-            /* ヘッダー右上にクレジットを配置 */
+            /* ヘッダー（タイトルのみ） */
             .app-header {
                 display: flex;
                 align-items: center;
-                justify-content: space-between;
+                justify-content: flex-start;
                 gap: 12px;
                 flex-wrap: wrap;
             }
             .app-title {
                 min-width: 0;
             }
-            .credit--header {
-                margin: 0;
-            }
-            .credit--header .credit__pill {
-                margin: 0;
+
+            /* 右上固定のクレジット（画面右上／タイトルと同じ高さ） */
+            .credit-floating {
+                position: fixed;
+                top: calc(16px + env(safe-area-inset-top));
+                right: calc(16px + env(safe-area-inset-right));
+                z-index: 60; /* アクションバーより上、シート(100)より下 */
+                pointer-events: none; /* 背景UIの操作を妨げない */
             }
 
             h1 {
@@ -174,9 +175,9 @@
                 appearance: none;
                 border: 1px solid var(--border);
                 background: #fff;
-                color: var(--text);
+                color: #121826;
                 width: 44px;
-                height: 44px; /* 44px 四方で統一 */
+                height: 44px;
                 border-radius: 999px;
                 font-size: 20px;
                 line-height: 1;
@@ -207,7 +208,7 @@
                 border: 1px solid var(--border);
                 border-radius: 10px;
                 background: #fff;
-                color: var(--text);
+                color: #121826;
                 outline: none;
                 scroll-margin-bottom: calc(var(--action-h) + var(--action-gap));
             }
@@ -234,13 +235,13 @@
             }
             .input-like {
                 width: 100%;
-                min-height: 68px; /* メニュー行と高さあわせ（見た目のボリューム） */
+                min-height: 68px;
                 font-size: 1rem;
-                padding: 12px; /* メニューカードと同じ内側余白 */
+                padding: 12px;
                 background: #fff;
-                color: var(--text);
+                color: #121826;
                 border: 1px solid var(--border);
-                border-radius: 12px; /* メニューカードと同じ角丸 */
+                border-radius: 12px;
                 outline: none;
                 text-align: left;
                 display: flex;
@@ -252,13 +253,12 @@
             .input-like:focus-visible {
                 box-shadow: var(--ring);
             }
-            /* 座席エラー表示用の装飾 */
             .input-like--error {
                 border-color: #ef4444;
                 box-shadow: inset 0 0 0 2px rgba(239, 68, 68, 0.12);
             }
             .field-error {
-                color: #b91c1c; /* 赤字 */
+                color: #b91c1c;
                 font-size: 0.92rem;
                 margin-top: 4px;
             }
@@ -336,7 +336,7 @@
                 background: var(--accent);
                 color: #fff;
                 padding: 0 18px;
-                min-height: 44px; /* 統一 */
+                min-height: 44px;
                 border-radius: 999px;
                 font-size: 1rem;
                 cursor: pointer;
@@ -348,7 +348,7 @@
             }
             .primary:disabled {
                 opacity: 0.8;
-                cursor: default; /* 常にノーマルカーソル */
+                cursor: default;
                 box-shadow: none;
             }
 
@@ -412,7 +412,7 @@
                 padding: 10px 12px;
                 border-bottom: 1px solid var(--border);
                 gap: 8px;
-                min-height: 64px; /* ヘッダーの高さを全シートで統一 */
+                min-height: 64px;
             }
             .sheet__title {
                 font-weight: 800;
@@ -441,15 +441,15 @@
                 appearance: none;
                 border: 1px solid var(--border);
                 background: #fff;
-                color: var(--text);
+                color: #121826;
                 padding: 0 14px;
-                min-height: 44px; /* 高さを統一 */
+                min-height: 44px;
                 border-radius: 999px;
                 cursor: pointer;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                font-size: 1rem; /* フォントサイズを .primary と統一 */
+                font-size: 1rem;
             }
 
             /* ピッカー固有（座席） */
@@ -512,30 +512,25 @@
                 background: none;
                 border: none;
                 color: var(--muted);
-                padding: 8px 12px; /* タッチ領域拡大 */
+                padding: 8px 12px;
                 font-size: 0.9rem;
                 text-decoration: underline;
                 text-underline-offset: 2px;
                 text-decoration-thickness: 1px;
                 cursor: pointer;
-                align-self: center; /* 中央揃え */
-                min-height: 44px; /* タッチ領域確保 */
-                margin-top: 0; /* 余白を詰める */
+                align-self: center;
+                min-height: 44px;
+                margin-top: 0;
             }
 
-            /* 履歴とクレジットの間隔調整 */
             .after-seat {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 6px; /* 履歴とクレジットの間隔を狭く */
+                gap: 6px;
             }
 
-            /* クレジット（Powered by ICT-PARK） */
-            .credit {
-                text-align: center;
-                margin-top: 0; /* 余白を詰める */
-            }
+            /* クレジット（見た目は使い回し） */
             .credit__pill {
                 display: inline-flex;
                 align-items: center;
@@ -545,11 +540,11 @@
                 border-radius: 999px;
                 color: var(--muted);
                 background: #fff;
-                font-size: 0.8rem; /* 小さめに */
+                font-size: 0.8rem;
                 line-height: 1;
             }
             .credit__mark {
-                font-size: 0.8rem; /* 小さめに */
+                font-size: 0.8rem;
                 opacity: 0.8;
             }
 
@@ -631,6 +626,14 @@
                     transform: rotate(360deg);
                 }
             }
+
+            /* 画面幅がかなり狭い場合は少しだけ縮小して右上に収める */
+            @media (max-width: 360px) {
+                .credit-floating .credit__pill {
+                    transform: scale(0.92);
+                    transform-origin: top right;
+                }
+            }
         </style>
     </head>
     <body>
@@ -639,12 +642,6 @@
                 <div class="app-title">
                     <h1>ご注文</h1>
                     <div class="sub">数量を入力して「注文する」をタップ</div>
-                </div>
-                <div class="credit credit--header" aria-label="開発クレジット">
-                    <span class="credit__pill">
-                        <span class="credit__mark" aria-hidden="true">⌁</span>
-                        Powered by ICT-PARK
-                    </span>
                 </div>
             </header>
 
@@ -678,7 +675,7 @@
                 </div>
             </div>
 
-            <!-- 履歴（クレジットはヘッダーへ移動） -->
+            <!-- 履歴（クレジットは右上に固定表示へ移動） -->
             <div class="after-seat">
                 <button
                     id="historyOpen"
@@ -696,7 +693,15 @@
             <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
 
-        <!-- 座席ピッカー（基準UI：タイトル左／右にクリア＋完了／下に閉じる） -->
+        <!-- 右上固定のクレジット -->
+        <div class="credit-floating" aria-hidden="true">
+            <span class="credit__pill">
+                <span class="credit__mark" aria-hidden="true">⌁</span>
+                Powered by ICT-PARK
+            </span>
+        </div>
+
+        <!-- 座席ピッカー -->
         <div
             id="seatSheet"
             class="sheet"
@@ -741,7 +746,7 @@
             </div>
         </div>
 
-        <!-- 注文内容の確認（座席シートと同レイアウト：右上に確定、下に戻る） -->
+        <!-- 注文内容の確認 -->
         <div
             id="confirmSheet"
             class="sheet"
@@ -777,7 +782,7 @@
             </div>
         </div>
 
-        <!-- 注文完了（右下＝閉じる／背景タップで閉じるに整理） -->
+        <!-- 注文完了 -->
         <div
             id="resultSheet"
             class="sheet"
@@ -793,9 +798,7 @@
                     <div class="sheet__title" id="resultTitle">
                         ご注文ありがとうございました
                     </div>
-                    <div class="sheet__actions">
-                        <!-- 右上ボタンを削除し、重複を整理 -->
-                    </div>
+                    <div class="sheet__actions"></div>
                 </div>
                 <div class="sheet__content">
                     <div class="seat-note" id="resultSeat"></div>
@@ -814,7 +817,7 @@
             </div>
         </div>
 
-        <!-- 注文履歴（表示のみ。右上＝全消去／下＝閉じる） -->
+        <!-- 注文履歴 -->
         <div
             id="historySheet"
             class="sheet"
@@ -915,19 +918,7 @@
             const totalEl = document.getElementById("total");
 
             const pad2 = (n) => String(n).padStart(2, "0");
-            const AREAS = [
-                "A",
-                "B",
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "H",
-                "I",
-                "J",
-                "K",
-            ];
+            const AREAS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
             const NUMS = Array.from({ length: 21 }, (_, i) => pad2(i + 1));
 
             const ROW_H = 44;
@@ -943,10 +934,7 @@
             // 固定バー高さをCSS変数に反映
             new ResizeObserver(() => {
                 const h = actionBar.offsetHeight || 80;
-                document.documentElement.style.setProperty(
-                    "--action-h",
-                    h + "px",
-                );
+                document.documentElement.style.setProperty("--action-h", h + "px");
             }).observe(actionBar);
 
             /* スケルトン描画 */
@@ -993,8 +981,7 @@
 
                 for (const it of items) {
                     const row = document.createElement("div");
-                    row.className =
-                        "item" + (it.active ? "" : " item--soldout");
+                    row.className = "item" + (it.active ? "" : " item--soldout");
                     row.dataset.itemId = it.id;
                     row.dataset.price = it.price;
                     row.dataset.active = String(!!it.active);
@@ -1014,17 +1001,14 @@
                         minus.type = "button";
                         minus.className = "btn";
                         minus.textContent = "−";
-                        minus.setAttribute(
-                            "aria-label",
-                            it.name + " を1つ減らす",
-                        );
+                        minus.setAttribute("aria-label", it.name + " を1つ減らす");
                         minus.disabled = true;
 
                         const input = document.createElement("input");
                         input.className = "num";
                         input.type = "number";
                         input.min = "0";
-                        input.max = "10"; /* 最大10個まで */
+                        input.max = "10";
                         input.step = "1";
                         input.value = "0";
                         input.inputMode = "numeric";
@@ -1034,16 +1018,10 @@
                         plus.type = "button";
                         plus.className = "btn";
                         plus.textContent = "+";
-                        plus.setAttribute(
-                            "aria-label",
-                            it.name + " を1つ増やす",
-                        );
+                        plus.setAttribute("aria-label", it.name + " を1つ増やす");
 
                         const clampQty = (v) => {
-                            v = parseInt(
-                                String(v).replace(/[^\d]/g, "") || "0",
-                                10,
-                            );
+                            v = parseInt(String(v).replace(/[^\d]/g, "") || "0", 10);
                             if (!Number.isFinite(v)) v = 0;
                             v = Math.max(0, Math.min(10, v));
                             return v;
@@ -1059,27 +1037,17 @@
                             setQty((parseInt(input.value || "0", 10) || 0) - 1),
                         );
                         plus.addEventListener("click", () =>
-                            setQty(
-                                (parseInt(input.value || "0", 10, 10) || 0) + 1,
-                            ),
+                            setQty((parseInt(input.value || "0", 10) || 0) + 1),
                         );
-                        input.addEventListener("input", () =>
-                            setQty(input.value),
-                        );
-                        input.addEventListener("blur", () =>
-                            setQty(input.value),
-                        );
+                        input.addEventListener("input", () => setQty(input.value));
+                        input.addEventListener("blur", () => setQty(input.value));
                         input.addEventListener("keydown", (e) => {
                             if (e.key === "ArrowUp") {
                                 e.preventDefault();
-                                setQty(
-                                    (parseInt(input.value || "0", 10) || 0) + 1,
-                                );
+                                setQty((parseInt(input.value || "0", 10) || 0) + 1);
                             } else if (e.key === "ArrowDown") {
                                 e.preventDefault();
-                                setQty(
-                                    (parseInt(input.value || "0", 10) || 0) - 1,
-                                );
+                                setQty((parseInt(input.value || "0", 10) || 0) - 1);
                             }
                         });
 
@@ -1103,10 +1071,7 @@
                 list.querySelectorAll(".item").forEach((r) => {
                     const active = r.dataset.active === "true";
                     if (!active) return;
-                    const qty = parseInt(
-                        r.querySelector(".num").value || "0",
-                        10,
-                    );
+                    const qty = parseInt(r.querySelector(".num").value || "0", 10);
                     if (qty > 0) {
                         const name =
                             r.querySelector(".name")?.textContent?.trim() || "";
@@ -1137,9 +1102,7 @@
                 // 座席未入力でもクリックできる（警告表示のため）
                 submitBtn.disabled = count === 0;
                 // 数量が0ならエラーは隠す（操作の誘導を減らすため）
-                if (count === 0) {
-                    hideSeatError();
-                }
+                if (count === 0) hideSeatError();
             }
 
             /* シート開閉とアクセシビリティ：フォーカス保持・トラップ・Esc対応 */
@@ -1153,10 +1116,7 @@
                     container.querySelectorAll(
                         'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
                     ),
-                ).filter(
-                    (el) =>
-                        el.offsetParent !== null || el.getClientRects().length,
-                );
+                ).filter((el) => el.offsetParent !== null || el.getClientRects().length);
             }
 
             function openSheet(sheet, triggerEl, initialFocusEl) {
@@ -1181,9 +1141,7 @@
                         initialFocusEl ||
                         getFocusableElements(sheet)[0] ||
                         sheet.querySelector(".sheet__panel");
-                    if (target && target.focus) {
-                        setTimeout(() => target.focus(), 0);
-                    }
+                    if (target && target.focus) setTimeout(() => target.focus(), 0);
 
                     // キーハンドラ（Tabトラップ＋Esc）
                     keydownHandler = (e) => {
@@ -1194,18 +1152,14 @@
                             return;
                         }
                         if (e.key === "Tab") {
-                            const focusables =
-                                getFocusableElements(activeSheet);
+                            const focusables = getFocusableElements(activeSheet);
                             if (!focusables.length) return;
                             const first = focusables[0];
                             const last = focusables[focusables.length - 1];
                             const current = document.activeElement;
 
                             if (e.shiftKey) {
-                                if (
-                                    current === first ||
-                                    !activeSheet.contains(current)
-                                ) {
+                                if (current === first || !activeSheet.contains(current)) {
                                     e.preventDefault();
                                     last.focus();
                                 }
@@ -1265,16 +1219,11 @@
             }
             function setSelectedClass(el, index) {
                 const items = el.querySelectorAll(".wheel__item");
-                items.forEach((it, i) =>
-                    it.classList.toggle("selected", i === index),
-                );
+                items.forEach((it, i) => it.classList.toggle("selected", i === index));
             }
             function nearestIndex(el) {
                 const t = el.scrollTop;
-                return Math.max(
-                    0,
-                    Math.min(el.children.length - 1, Math.round(t / ROW_H)),
-                );
+                return Math.max(0, Math.min(el.children.length - 1, Math.round(t / ROW_H)));
             }
             function scrollToIndex(el, index, behavior = "smooth") {
                 el.scrollTo({ top: index * ROW_H, behavior });
@@ -1302,13 +1251,9 @@
                 scrollToIndex(el, startIdx, "auto");
                 setSelectedClass(el, startIdx);
                 if (onChange) onChange(values[startIdx]);
-                el.addEventListener(
-                    "scroll",
-                    () => handleScroll(el, onChange),
-                    {
-                        passive: true,
-                    },
-                );
+                el.addEventListener("scroll", () => handleScroll(el, onChange), {
+                    passive: true,
+                });
                 el.addEventListener("click", (e) => {
                     const item = e.target.closest(".wheel__item");
                     if (!item) return;
@@ -1382,10 +1327,7 @@
                 seatError.hidden = false;
                 seatOpen.classList.add("input-like--error");
                 // 視線誘導：座席UIへスクロール
-                seatField.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                });
+                seatField.scrollIntoView({ behavior: "smooth", block: "center" });
                 // フォーカス
                 seatOpen.focus();
             }
@@ -1486,9 +1428,7 @@
                     head.className = "h-head";
                     const seat = document.createElement("div");
                     seat.className = "h-seat";
-                    seat.textContent = h.seat
-                        ? `座席 ${h.seat}`
-                        : "テイクアウト";
+                    seat.textContent = h.seat ? `座席 ${h.seat}` : "テイクアウト";
                     const meta = document.createElement("div");
                     meta.className = "h-meta";
                     meta.textContent = fmtYmdHM(h.ts);
@@ -1534,7 +1474,6 @@
                     return;
                 }
                 if (!seat) {
-                    // ここで座席エラーを座席UIの近くに赤字で表示
                     showSeatError();
                     return;
                 }
@@ -1591,29 +1530,25 @@
                     .then((res) => {
                         if (!res.ok) throw new Error(res.error || "failed");
 
-                        // 履歴へ保存（lastOrderSnapshot を利用）
+                        // 履歴へ保存
                         try {
                             const entry = {
                                 ts: Date.now(),
                                 seat: lastOrderSnapshot.seat || "",
-                                items: (lastOrderSnapshot.items || []).map(
-                                    (x) => ({
-                                        name: x.name,
-                                        quantity: x.quantity,
-                                        price: x.price,
-                                        total: x.total,
-                                        itemId: x.itemId || null,
-                                    }),
-                                ),
+                                items: (lastOrderSnapshot.items || []).map((x) => ({
+                                    name: x.name,
+                                    quantity: x.quantity,
+                                    price: x.price,
+                                    total: x.total,
+                                    itemId: x.itemId || null,
+                                })),
                                 groupId: res.groupId || null,
                             };
                             addHistoryEntry(entry);
                         } catch (e) {}
 
                         // 入力をリセット（座席は保持）
-                        document
-                            .querySelectorAll(".num")
-                            .forEach((i) => (i.value = "0"));
+                        document.querySelectorAll(".num").forEach((i) => (i.value = "0"));
                         document.querySelectorAll(".btn").forEach((b) => {
                             if (b.textContent === "−") b.disabled = true;
                         });
