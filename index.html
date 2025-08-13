@@ -239,6 +239,10 @@
             .panel[hidden] {
                 display: none;
             }
+            .panel--fg {
+                position: relative;
+                z-index: 70;
+            } /* フォアグラウンド用（マスクより上） */
             .p-head {
                 display: flex;
                 align-items: center;
@@ -317,7 +321,7 @@
                 justify-content: space-between;
                 gap: 12px;
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-                z-index: 50;
+                z-index: 70; /* マスクより上 */
             }
             .action[hidden] {
                 display: none;
@@ -481,6 +485,17 @@
                 overflow: hidden;
                 touch-action: none;
             }
+
+            /* 完了時の操作ブロック用マスク（透明・クリック遮断） */
+            .ui-mask {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0);
+                z-index: 60; /* コンテンツの上、各バー・完了パネルより下 */
+            }
+            .ui-mask[hidden] {
+                display: none;
+            }
         </style>
     </head>
     <body>
@@ -526,7 +541,7 @@
                 </div>
             </section>
 
-            <!-- 完了パネル -->
+            <!-- 完了パネル（フォアグラウンド化可能） -->
             <section id="donePanel" class="panel" hidden>
                 <div class="p-head">
                     <div class="p-title">注文が完了しました</div>
@@ -620,6 +635,9 @@
             </button>
         </div>
 
+        <!-- 完了時に背面操作をブロックする透明マスク -->
+        <div id="uiMask" class="ui-mask" hidden></div>
+
         <script>
             const API_BASE =
                 "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
@@ -653,6 +671,8 @@
             const submitBtn = document.getElementById("submitBtn");
             const doneBar = document.getElementById("doneBar");
             const backToOrderBtn = document.getElementById("backToOrderBtn");
+
+            const uiMask = document.getElementById("uiMask");
 
             const result = document.getElementById("result");
             const countEl = document.getElementById("count");
@@ -984,7 +1004,6 @@
 
             // ===== ユーティリティ：下端へスクロール =====
             function scrollToBottomSmooth() {
-                // レイアウト確定後にスクロール
                 requestAnimationFrame(() => {
                     const bottom = Math.max(
                         document.documentElement.scrollHeight,
@@ -1006,6 +1025,8 @@
                     donePanel.hidden = true;
                     actionBar.hidden = false;
                     doneBar.hidden = true;
+                    uiMask.hidden = true; // ブロック解除
+                    donePanel.classList.remove("panel--fg");
                     submitBtn.disabled =
                         collectOrderDetailed().length === 0 ||
                         !seatEl.value.trim();
@@ -1016,11 +1037,13 @@
                 } else if (next === "confirm") {
                     buildConfirmList();
                     list.hidden = true;
-                    seatField.hidden = false; // 座席は表示（安心感）
+                    seatField.hidden = false; // 座席は表示
                     confirmPanel.hidden = false;
                     donePanel.hidden = true;
                     actionBar.hidden = false;
                     doneBar.hidden = true;
+                    uiMask.hidden = true; // ブロック不要
+                    donePanel.classList.remove("panel--fg");
                     submitBtn.disabled = false;
                     submitBtn.textContent = "注文する";
                     result.textContent = "";
@@ -1035,6 +1058,8 @@
                     donePanel.hidden = false;
                     actionBar.hidden = true;
                     doneBar.hidden = false;
+                    uiMask.hidden = false; // 背面操作をブロック
+                    donePanel.classList.add("panel--fg"); // 完了パネルは前面で操作可能
                     result.textContent = "";
                     result.className = "msg";
                     fillDoneBarSummary();
@@ -1182,7 +1207,6 @@
             backToOrderBtn.addEventListener("click", () => {
                 lastOrderSnapshot = null;
                 setStage("build"); // 座席は保持（運用上便利）
-                // 戻った直後は一番上に戻すより、直近の操作位置に近い下部を保つ
                 scrollToBottomSmooth();
             });
 
