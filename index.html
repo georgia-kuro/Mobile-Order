@@ -1,719 +1,1122 @@
 <html lang="ja">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <title>モバイルオーダー（注文）</title>
-    <style>
-      :root {
-        --bg: #f7f7fb;
-        --card: #fff;
-        --text: #121826;
-        --muted: #6b7280;
-        --border: #e6e7ec;
-        --accent: #2563eb;
-        --ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
-        --action-h: 80px;
-        --action-gap: 24px;
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,viewport-fit=cover"
+        />
+        <title>モバイルオーダー（注文）</title>
+        <style>
+            :root {
+                --bg: #f7f7fb;
+                --card: #fff;
+                --text: #121826;
+                --muted: #6b7280;
+                --border: #e6e7ec;
+                --accent: #2563eb;
+                --ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
+                --action-h: 80px;
+                --action-gap: 24px;
 
-        /* ピッカー用 */
-        --row: 44px;
-        --wheel-h: 220px;
-        --sheet-radius: 16px;
-      }
-      * { box-sizing: border-box; }
-      html, body { height: 100%; }
-      html {
-        font-size: 16px;
-        scroll-padding-bottom: calc(var(--action-h) + var(--action-gap) + env(safe-area-inset-bottom));
-      }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-        -webkit-text-size-adjust: 100%;
-        -webkit-tap-highlight-color: transparent;
-        padding: 16px;
-        line-height: 1.5;
-        font-feature-settings: "tnum" 1, "cv01" 1;
-      }
-      .container {
-        width: 100%;
-        max-width: 640px;
-        margin: 0 auto;
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      h1 { margin: 0; font-size: clamp(18px, 4.5vw, 22px); font-weight: 800; letter-spacing: 0.01em; }
-      .sub { margin-top: 4px; color: var(--muted); font-size: 0.92rem; }
+                /* ピッカー用 */
+                --row: 44px;
+                --wheel-h: 220px;
+                --sheet-radius: 16px;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            html {
+                font-size: 16px;
+                scroll-padding-bottom: calc(
+                    var(--action-h) + var(--action-gap) +
+                        env(safe-area-inset-bottom)
+                );
+            }
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--text);
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    "Helvetica Neue",
+                    Arial,
+                    sans-serif;
+                -webkit-text-size-adjust: 100%;
+                -webkit-tap-highlight-color: transparent;
+                padding: 16px;
+                line-height: 1.5;
+                font-feature-settings:
+                    "tnum" 1,
+                    "cv01" 1;
+            }
+            .container {
+                width: 100%;
+                max-width: 640px;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            h1 {
+                margin: 0;
+                font-size: clamp(18px, 4.5vw, 22px);
+                font-weight: 800;
+                letter-spacing: 0.01em;
+            }
+            .sub {
+                margin-top: 4px;
+                color: var(--muted);
+                font-size: 0.92rem;
+            }
 
-      /* お知らせ（全品売切れ） */
-      .notice {
-        background: #fff7ed;
-        color: #9a3412;
-        border: 1px solid #fed7aa;
-        border-radius: 12px;
-        padding: 10px 12px;
-      }
-      .notice[hidden] { display: none; }
+            /* お知らせ（全品売切れ） */
+            .notice {
+                background: #fff7ed;
+                color: #9a3412;
+                border: 1px solid #fed7aa;
+                border-radius: 12px;
+                padding: 10px 12px;
+            }
+            .notice[hidden] {
+                display: none;
+            }
 
-      /* 商品リスト */
-      .list { display: flex; flex-direction: column; gap: 12px; }
-      .item {
-        display: grid;
-        grid-template-columns: 1fr auto;
-        gap: 8px 12px;
-        align-items: center;
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px;
-      }
-      .item--soldout { opacity: 0.85; }
-      .info { min-width: 0; }
-      .name { font-weight: 700; line-height: 1.3; word-break: break-word; overflow-wrap: anywhere; }
-      .meta { margin-top: 6px; color: var(--muted); font-size: 0.95rem; }
-      .price { font-weight: 800; }
-      .sold {
-        display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px;
-        background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; font-weight: 800; white-space: nowrap;
-      }
+            /* 商品リスト */
+            .list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .item {
+                display: grid;
+                grid-template-columns: 1fr auto;
+                gap: 8px 12px;
+                align-items: center;
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 12px;
+            }
+            .item--soldout {
+                opacity: 0.85;
+            }
+            .info {
+                min-width: 0;
+            }
+            .name {
+                font-weight: 700;
+                line-height: 1.3;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+            }
+            .meta {
+                margin-top: 6px;
+                color: var(--muted);
+                font-size: 0.95rem;
+            }
+            .price {
+                font-weight: 800;
+            }
+            .sold {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 12px;
+                border-radius: 999px;
+                background: #fee2e2;
+                color: #991b1b;
+                border: 1px solid #fecaca;
+                font-weight: 800;
+                white-space: nowrap;
+            }
 
-      /* ステッパー */
-      .stepper { display: flex; align-items: center; gap: 10px; }
-      .btn {
-        appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text);
-        width: 44px; height: 44px; border-radius: 999px; font-size: 20px; line-height: 1; cursor: pointer;
-        display: inline-flex; align-items: center; justify-content: center; transition: transform 0.05s ease;
-      }
-      .btn:active { transform: translateY(1px); }
-      .btn:focus-visible { outline: none; box-shadow: var(--ring); }
-      .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
-      .num {
-        width: 76px; min-height: 44px; text-align: center; font-size: 1rem; padding: 10px 8px;
-        border: 1px solid var(--border); border-radius: 10px; background: #fff; color: var(--text); outline: none;
-        scroll-margin-bottom: calc(var(--action-h) + var(--action-gap));
-      }
-      .num:focus-visible { box-shadow: var(--ring); }
-      input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-      input[type="number"] { -moz-appearance: textfield; }
+            /* ステッパー */
+            .stepper {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            .btn {
+                appearance: none;
+                border: 1px solid var(--border);
+                background: #fff;
+                color: var(--text);
+                width: 44px;
+                height: 44px;
+                border-radius: 999px;
+                font-size: 20px;
+                line-height: 1;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.05s ease;
+            }
+            .btn:active {
+                transform: translateY(1px);
+            }
+            .btn:focus-visible {
+                outline: none;
+                box-shadow: var(--ring);
+            }
+            .btn[disabled] {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
+            .num {
+                width: 76px;
+                min-height: 44px;
+                text-align: center;
+                font-size: 1rem;
+                padding: 10px 8px;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                background: #fff;
+                color: var(--text);
+                outline: none;
+                scroll-margin-bottom: calc(var(--action-h) + var(--action-gap));
+            }
+            .num:focus-visible {
+                box-shadow: var(--ring);
+            }
+            input[type="number"]::-webkit-outer-spin-button,
+            input[type="number"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type="number"] {
+                -moz-appearance: textfield;
+            }
 
-      /* 座席番号（インライン表示＋ローラーピッカー起動） */
-      .field { display: flex; flex-direction: column; gap: 6px; }
-      .field label { color: var(--muted); }
-      .input-like {
-        width: 100%; min-height: 44px; font-size: 1rem; padding: 12px 14px; background: #fff; color: var(--text);
-        border: 1px solid var(--border); border-radius: 10px; outline: none; text-align: left;
-        display: flex; align-items: center; justify-content: space-between; gap: 8px; cursor: pointer;
-      }
-      .input-like:focus-visible { box-shadow: var(--ring); }
-      .muted { color: var(--muted); }
+            /* 座席番号（インライン表示＋ローラーピッカー起動） */
+            .field {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .field label {
+                color: var(--muted);
+            }
+            .input-like {
+                width: 100%;
+                min-height: 44px;
+                font-size: 1rem;
+                padding: 12px 14px;
+                background: #fff;
+                color: var(--text);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                outline: none;
+                text-align: left;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                cursor: pointer;
+            }
+            .input-like:focus-visible {
+                box-shadow: var(--ring);
+            }
+            .muted {
+                color: var(--muted);
+            }
 
-      /* 確認・完了パネル */
-      .panel {
-        background: var(--card);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 12px;
-      }
-      .panel[hidden] { display: none; }
-      .panel h2 {
-        margin: 0 0 8px 0;
-        font-size: 1.05rem;
-        font-weight: 800;
-      }
-      .confirm-list, .done-list {
-        display: grid;
-        gap: 6px;
-        margin-top: 8px;
-      }
-      .row-brief {
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 6px 12px;
-        align-items: baseline;
-        border-bottom: 1px dashed #e5e7eb;
-        padding: 6px 0;
-      }
-      .row-brief:last-child { border-bottom: none; }
-      .brief-name { font-weight: 700; }
-      .brief-qty { color: var(--muted); }
-      .brief-price { color: var(--muted); }
-      .hint { color: var(--muted); margin-top: 8px; }
+            /* 確認・完了パネル */
+            .panel {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 12px;
+            }
+            .panel[hidden] {
+                display: none;
+            }
+            .panel h2 {
+                margin: 0 0 8px 0;
+                font-size: 1.05rem;
+                font-weight: 800;
+            }
+            .confirm-list,
+            .done-list {
+                display: grid;
+                gap: 6px;
+                margin-top: 8px;
+            }
+            .row-brief {
+                display: grid;
+                grid-template-columns: 1fr auto auto;
+                gap: 6px 12px;
+                align-items: baseline;
+                border-bottom: 1px dashed #e5e7eb;
+                padding: 6px 0;
+            }
+            .row-brief:last-child {
+                border-bottom: none;
+            }
+            .brief-name {
+                font-weight: 700;
+            }
+            .brief-qty {
+                color: var(--muted);
+            }
+            .brief-price {
+                color: var(--muted);
+            }
+            .hint {
+                color: var(--muted);
+                margin-top: 8px;
+            }
 
-      /* メッセージ */
-      .msg { font-size: 0.95rem; color: var(--muted); }
-      .msg--error { color: #dc2626; }
-      .msg--ok { color: #047857; }
+            /* メッセージ */
+            .msg {
+                font-size: 0.95rem;
+                color: var(--muted);
+            }
+            .msg--error {
+                color: #dc2626;
+            }
+            .msg--ok {
+                color: #047857;
+            }
 
-      /* 固定アクションバー */
-      .action {
-        position: fixed; left: 16px; right: 16px; bottom: max(16px, env(safe-area-inset-bottom));
-        background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 10px 12px;
-        display: flex; align-items: center; justify-content: space-between; gap: 12px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.08); z-index: 50;
-      }
-      .summary { font-weight: 800; white-space: nowrap; }
-      .summary [data-amount] { font-variant-numeric: tabular-nums; }
-      .primary {
-        appearance: none; border: none; background: var(--accent); color: #fff; padding: 12px 18px;
-        min-height: 44px; border-radius: 999px; font-size: 1rem; cursor: pointer; white-space: nowrap;
-        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
-      }
-      .primary:disabled { opacity: 0.6; cursor: not-allowed; box-shadow: none; }
+            /* 固定アクションバー */
+            .action {
+                position: fixed;
+                left: 16px;
+                right: 16px;
+                bottom: max(16px, env(safe-area-inset-bottom));
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 10px 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+                z-index: 50;
+            }
+            .summary {
+                font-weight: 800;
+                white-space: nowrap;
+            }
+            .summary [data-amount] {
+                font-variant-numeric: tabular-nums;
+            }
+            .primary {
+                appearance: none;
+                border: none;
+                background: var(--accent);
+                color: #fff;
+                padding: 12px 18px;
+                min-height: 44px;
+                border-radius: 999px;
+                font-size: 1rem;
+                cursor: pointer;
+                white-space: nowrap;
+                box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+            }
+            .primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                box-shadow: none;
+            }
 
-      /* 下スペーサー */
-      .bottom-spacer { height: calc(var(--action-h) + var(--action-gap) + env(safe-area-inset-bottom)); }
+            /* 下スペーサー */
+            .bottom-spacer {
+                height: calc(
+                    var(--action-h) + var(--action-gap) +
+                        env(safe-area-inset-bottom)
+                );
+            }
 
-      /* ボトムシート（iOSピッカー風ローラー） */
-      .sheet { position: fixed; inset: 0; z-index: 100; pointer-events: none; }
-      .sheet[hidden] { display: none; }
-      .sheet__backdrop {
-        position: absolute; inset: 0; background: rgba(0,0,0,0.35); opacity: 0; transition: opacity 160ms ease;
-      }
-      .sheet__panel {
-        position: absolute; left: 0; right: 0; bottom: 0; transform: translateY(100%); background: var(--card);
-        border-top-left-radius: var(--sheet-radius); border-top-right-radius: var(--sheet-radius);
-        border: 1px solid var(--border); border-bottom: none; box-shadow: 0 -16px 48px rgba(0,0,0,0.18);
-        transition: transform 200ms ease; display: grid; grid-template-rows: auto auto auto; gap: 0; pointer-events: auto;
-      }
-      .sheet--open .sheet__backdrop { opacity: 1; }
-      .sheet--open .sheet__panel { transform: translateY(0%); }
-      .sheet__header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--border); }
-      .sheet__title { font-weight: 800; }
-      .sheet__actions { display: flex; align-items: center; gap: 8px; }
-      .btn--ghost { appearance: none; border: 1px solid var(--border); background: #fff; color: var(--text); padding: 8px 12px; border-radius: 10px; cursor: pointer; }
-      .sheet__wheels { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 14px; }
-      .wheel { position: relative; height: var(--wheel-h); overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: #fff; }
-      .wheel__list {
-        height: 100%; overflow: auto; scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch;
-        padding-top: calc((var(--wheel-h) - var(--row)) / 2); padding-bottom: calc((var(--wheel-h) - var(--row)) / 2); margin: 0;
-      }
-      .wheel__item { height: var(--row); display: flex; align-items: center; justify-content: center; font-size: 1.15rem; scroll-snap-align: center; user-select: none; }
-      .wheel__item.selected { font-weight: 800; color: var(--accent); }
-      .indicator {
-        position: absolute; left: 14px; right: 14px; top: 50%; transform: translateY(-50%); height: var(--row);
-        pointer-events: none; border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; border-radius: 6px;
-      }
-      .sheet__footer { padding: calc(8px + env(safe-area-inset-bottom)) 12px 8px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); }
-      .no-scroll { overflow: hidden; touch-action: none; }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header>
-        <div>
-          <h1>ご注文</h1>
-          <div class="sub">数量を入力して「注文する」をタップ</div>
+            /* ボトムシート（iOSピッカー風ローラー） */
+            .sheet {
+                position: fixed;
+                inset: 0;
+                z-index: 100;
+                pointer-events: none;
+            }
+            .sheet[hidden] {
+                display: none;
+            }
+            .sheet__backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.35);
+                opacity: 0;
+                transition: opacity 160ms ease;
+            }
+            .sheet__panel {
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: translateY(100%);
+                background: var(--card);
+                border-top-left-radius: var(--sheet-radius);
+                border-top-right-radius: var(--sheet-radius);
+                border: 1px solid var(--border);
+                border-bottom: none;
+                box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.18);
+                transition: transform 200ms ease;
+                display: grid;
+                grid-template-rows: auto auto auto;
+                gap: 0;
+                pointer-events: auto;
+            }
+            .sheet--open .sheet__backdrop {
+                opacity: 1;
+            }
+            .sheet--open .sheet__panel {
+                transform: translateY(0%);
+            }
+            .sheet__header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--border);
+            }
+            .sheet__title {
+                font-weight: 800;
+            }
+            .sheet__actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .btn--ghost {
+                appearance: none;
+                border: 1px solid var(--border);
+                background: #fff;
+                color: var(--text);
+                padding: 8px 12px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+            .sheet__wheels {
+                position: relative;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding: 12px 14px;
+            }
+            .wheel {
+                position: relative;
+                height: var(--wheel-h);
+                overflow: hidden;
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: #fff;
+            }
+            .wheel__list {
+                height: 100%;
+                overflow: auto;
+                scroll-snap-type: y mandatory;
+                -webkit-overflow-scrolling: touch;
+                padding-top: calc((var(--wheel-h) - var(--row)) / 2);
+                padding-bottom: calc((var(--wheel-h) - var(--row)) / 2);
+                margin: 0;
+            }
+            .wheel__item {
+                height: var(--row);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                scroll-snap-align: center;
+                user-select: none;
+            }
+            .wheel__item.selected {
+                font-weight: 800;
+                color: var(--accent);
+            }
+            .indicator {
+                position: absolute;
+                left: 14px;
+                right: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                height: var(--row);
+                pointer-events: none;
+                border-top: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5e7eb;
+                border-radius: 6px;
+            }
+            .sheet__footer {
+                padding: calc(8px + env(safe-area-inset-bottom)) 12px 8px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+                border-top: 1px solid var(--border);
+            }
+            .no-scroll {
+                overflow: hidden;
+                touch-action: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <div>
+                    <h1>ご注文</h1>
+                    <div class="sub">数量を入力して「注文する」をタップ</div>
+                </div>
+            </header>
+
+            <div id="notice" class="notice" hidden aria-live="polite"></div>
+
+            <!-- 通常のメニュー一覧 -->
+            <div id="list" class="list" aria-live="polite">読み込み中…</div>
+
+            <!-- 座席 -->
+            <div id="seatField" class="field">
+                <label for="seatOpen">座席番号</label>
+                <button
+                    id="seatOpen"
+                    class="input-like"
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-controls="seatSheet"
+                >
+                    <span id="seatDisplay" class="muted">座席を選択</span>
+                </button>
+                <input id="seat" type="hidden" />
+            </div>
+
+            <!-- 確認パネル -->
+            <section id="confirmPanel" class="panel" hidden>
+                <h2>注文内容の確認</h2>
+                <div class="confirm-list" id="confirmList"></div>
+                <div class="hint">
+                    内容を確認して、間違いがなければ「注文する」をタップしてください。
+                </div>
+            </section>
+
+            <!-- 完了パネル -->
+            <section id="donePanel" class="panel" hidden>
+                <h2>注文が完了しました</h2>
+                <div class="done-list" id="doneList"></div>
+                <div class="hint">
+                    スタッフが配達に来ますので、現金をご用意の上、少々お待ちください。
+                </div>
+                <div style="margin-top: 12px">
+                    <button
+                        id="backToOrderBtn"
+                        class="btn--ghost"
+                        type="button"
+                    >
+                        注文画面に戻る
+                    </button>
+                </div>
+            </section>
+
+            <div id="result" class="msg" aria-live="polite"></div>
+
+            <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
-      </header>
 
-      <div id="notice" class="notice" hidden aria-live="polite"></div>
-
-      <!-- 通常のメニュー一覧 -->
-      <div id="list" class="list" aria-live="polite">読み込み中…</div>
-
-      <!-- 座席 -->
-      <div id="seatField" class="field">
-        <label for="seatOpen">座席番号</label>
-        <button id="seatOpen" class="input-like" type="button" aria-haspopup="dialog" aria-controls="seatSheet">
-          <span id="seatDisplay" class="muted">座席を選択</span>
-        </button>
-        <input id="seat" type="hidden" />
-      </div>
-
-      <!-- 確認パネル -->
-      <section id="confirmPanel" class="panel" hidden>
-        <h2>注文内容の確認</h2>
-        <div class="confirm-list" id="confirmList"></div>
-        <div class="hint">内容を確認して、間違いがなければ「注文する」をタップしてください。</div>
-      </section>
-
-      <!-- 完了パネル -->
-      <section id="donePanel" class="panel" hidden>
-        <h2>注文が完了しました</h2>
-        <div class="done-list" id="doneList"></div>
-        <div class="hint">スタッフが配達に来ますので、現金をご用意の上、少々お待ちください。</div>
-        <div style="margin-top: 12px;">
-          <button id="backToOrderBtn" class="btn--ghost" type="button">注文画面に戻る</button>
+        <!-- iOSの日時ピッカー風：ボトムシート + 2列ローラー -->
+        <div
+            id="seatSheet"
+            class="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seatTitle"
+            hidden
+        >
+            <div class="sheet__backdrop" id="sheetBackdrop"></div>
+            <div class="sheet__panel" role="document">
+                <div class="sheet__header">
+                    <div class="sheet__title" id="seatTitle">座席を選択</div>
+                    <div class="sheet__actions">
+                        <button id="seatClear" class="btn--ghost" type="button">
+                            クリア
+                        </button>
+                        <button
+                            id="seatDone"
+                            class="primary"
+                            type="button"
+                            disabled
+                        >
+                            完了
+                        </button>
+                    </div>
+                </div>
+                <div class="sheet__wheels">
+                    <div class="wheel">
+                        <div class="wheel__list" id="wheelArea"></div>
+                    </div>
+                    <div class="wheel">
+                        <div class="wheel__list" id="wheelNum"></div>
+                    </div>
+                    <div class="indicator" aria-hidden="true"></div>
+                </div>
+                <div class="sheet__footer">
+                    <button id="seatCancel" class="btn--ghost" type="button">
+                        閉じる
+                    </button>
+                </div>
+            </div>
         </div>
-      </section>
 
-      <div id="result" class="msg" aria-live="polite"></div>
-
-      <div class="bottom-spacer" aria-hidden="true"></div>
-    </div>
-
-    <!-- iOSの日時ピッカー風：ボトムシート + 2列ローラー -->
-    <div id="seatSheet" class="sheet" role="dialog" aria-modal="true" aria-labelledby="seatTitle" hidden>
-      <div class="sheet__backdrop" id="sheetBackdrop"></div>
-      <div class="sheet__panel" role="document">
-        <div class="sheet__header">
-          <div class="sheet__title" id="seatTitle">座席を選択</div>
-          <div class="sheet__actions">
-            <button id="seatClear" class="btn--ghost" type="button">クリア</button>
-            <button id="seatDone" class="primary" type="button" disabled>完了</button>
-          </div>
+        <div
+            class="action"
+            id="actionBar"
+            role="region"
+            aria-label="注文の合計"
+        >
+            <div class="summary" aria-live="polite">
+                <span id="count">0</span> 点 / 合計
+                <span id="total" data-amount>¥0</span>
+            </div>
+            <button id="submitBtn" class="primary" disabled>注文する</button>
         </div>
-        <div class="sheet__wheels">
-          <div class="wheel"><div class="wheel__list" id="wheelArea"></div></div>
-          <div class="wheel"><div class="wheel__list" id="wheelNum"></div></div>
-          <div class="indicator" aria-hidden="true"></div>
-        </div>
-        <div class="sheet__footer">
-          <button id="seatCancel" class="btn--ghost" type="button">閉じる</button>
-        </div>
-      </div>
-    </div>
 
-    <div class="action" id="actionBar" role="region" aria-label="注文の合計">
-      <div class="summary" aria-live="polite">
-        <span id="count">0</span> 点 / 合計 <span id="total" data-amount>¥0</span>
-      </div>
-      <button id="submitBtn" class="primary" disabled>注文する</button>
-    </div>
+        <script>
+            const API_BASE =
+                "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
 
-    <script>
-      const API_BASE = "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
+            const list = document.getElementById("list");
+            const notice = document.getElementById("notice");
 
-      const list = document.getElementById("list");
-      const notice = document.getElementById("notice");
+            const seatField = document.getElementById("seatField");
+            const seatEl = document.getElementById("seat");
+            const seatOpen = document.getElementById("seatOpen");
+            const seatDisplay = document.getElementById("seatDisplay");
 
-      const seatField = document.getElementById("seatField");
-      const seatEl = document.getElementById("seat");
-      const seatOpen = document.getElementById("seatOpen");
-      const seatDisplay = document.getElementById("seatDisplay");
+            // シート関連
+            const seatSheet = document.getElementById("seatSheet");
+            const sheetBackdrop = document.getElementById("sheetBackdrop");
+            const seatDone = document.getElementById("seatDone");
+            const seatCancel = document.getElementById("seatCancel");
+            const seatClear = document.getElementById("seatClear");
+            const wheelArea = document.getElementById("wheelArea");
+            const wheelNum = document.getElementById("wheelNum");
 
-      // シート関連
-      const seatSheet = document.getElementById("seatSheet");
-      const sheetBackdrop = document.getElementById("sheetBackdrop");
-      const seatDone = document.getElementById("seatDone");
-      const seatCancel = document.getElementById("seatCancel");
-      const seatClear = document.getElementById("seatClear");
-      const wheelArea = document.getElementById("wheelArea");
-      const wheelNum = document.getElementById("wheelNum");
+            // 確認・完了
+            const confirmPanel = document.getElementById("confirmPanel");
+            const confirmList = document.getElementById("confirmList");
+            const donePanel = document.getElementById("donePanel");
+            const doneList = document.getElementById("doneList");
+            const backToOrderBtn = document.getElementById("backToOrderBtn");
 
-      // 確認・完了
-      const confirmPanel = document.getElementById("confirmPanel");
-      const confirmList = document.getElementById("confirmList");
-      const donePanel = document.getElementById("donePanel");
-      const doneList = document.getElementById("doneList");
-      const backToOrderBtn = document.getElementById("backToOrderBtn");
+            const submitBtn = document.getElementById("submitBtn");
+            const result = document.getElementById("result");
+            const actionBar = document.getElementById("actionBar");
+            const countEl = document.getElementById("count");
+            const totalEl = document.getElementById("total");
 
-      const submitBtn = document.getElementById("submitBtn");
-      const result = document.getElementById("result");
-      const actionBar = document.getElementById("actionBar");
-      const countEl = document.getElementById("count");
-      const totalEl = document.getElementById("total");
+            const pad2 = (n) => String(n).padStart(2, "0");
+            const AREAS = [
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+            ];
+            const NUMS = Array.from({ length: 21 }, (_, i) => pad2(i + 1));
 
-      const pad2 = (n) => String(n).padStart(2, "0");
-      const AREAS = ["A","B","C","D","E","F","G","H","I","J","K"];
-      const NUMS = Array.from({ length: 21 }, (_, i) => pad2(i + 1));
+            const ROW_H = 44;
+            let tmpArea = null;
+            let tmpNum = null;
+            let scrollTimers = new Map();
 
-      const ROW_H = 44;
-      let tmpArea = null;
-      let tmpNum = null;
-      let scrollTimers = new Map();
+            // UIステージ: build=入力中, confirm=確認, done=完了
+            const ui = { stage: "build" };
 
-      // UIステージ: build=入力中, confirm=確認, done=完了
-      const ui = { stage: "build" };
+            const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
 
-      const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
+            // 固定バー高さをCSS変数に反映
+            new ResizeObserver(() => {
+                const h = actionBar.offsetHeight || 80;
+                document.documentElement.style.setProperty(
+                    "--action-h",
+                    h + "px",
+                );
+            }).observe(actionBar);
 
-      // 固定バー高さをCSS変数に反映
-      new ResizeObserver(() => {
-        const h = actionBar.offsetHeight || 80;
-        document.documentElement.style.setProperty("--action-h", h + "px");
-      }).observe(actionBar);
+            function renderMenu(items) {
+                list.innerHTML = "";
+                notice.hidden = true;
+                notice.textContent = "";
 
-      function renderMenu(items) {
-        list.innerHTML = "";
-        notice.hidden = true;
-        notice.textContent = "";
+                if (!items || !items.length) {
+                    const div = document.createElement("div");
+                    div.className = "msg";
+                    div.textContent = "現在ご注文いただける商品がありません。";
+                    list.append(div);
+                    submitBtn.disabled = true;
+                    return;
+                }
 
-        if (!items || !items.length) {
-          const div = document.createElement("div");
-          div.className = "msg";
-          div.textContent = "現在ご注文いただける商品がありません。";
-          list.append(div);
-          submitBtn.disabled = true;
-          return;
-        }
+                const anyActive = items.some((it) => !!it.active);
+                if (!anyActive) {
+                    notice.hidden = false;
+                    notice.textContent =
+                        "モバイルオーダーは試合開始後に受け付けます。";
+                }
 
-        const anyActive = items.some((it) => !!it.active);
-        if (!anyActive) {
-          notice.hidden = false;
-          notice.textContent = "モバイルオーダーは試合開始後に受け付けます。";
-        }
+                for (const it of items) {
+                    const row = document.createElement("div");
+                    row.className =
+                        "item" + (it.active ? "" : " item--soldout");
+                    row.dataset.itemId = it.id;
+                    row.dataset.price = it.price;
+                    row.dataset.active = String(!!it.active);
 
-        for (const it of items) {
-          const row = document.createElement("div");
-          row.className = "item" + (it.active ? "" : " item--soldout");
-          row.dataset.itemId = it.id;
-          row.dataset.price = it.price;
-          row.dataset.active = String(!!it.active);
-
-          const info = document.createElement("div");
-          info.className = "info";
-          info.innerHTML = `<div class="name">${it.name}</div>
+                    const info = document.createElement("div");
+                    info.className = "info";
+                    info.innerHTML = `<div class="name">${it.name}</div>
             <div class="meta"><span class="price">${yen(it.price)}</span>（税込）</div>`;
 
-          const right = document.createElement("div");
+                    const right = document.createElement("div");
 
-          if (it.active) {
-            const stepper = document.createElement("div");
-            stepper.className = "stepper";
+                    if (it.active) {
+                        const stepper = document.createElement("div");
+                        stepper.className = "stepper";
 
-            const minus = document.createElement("button");
-            minus.type = "button";
-            minus.className = "btn";
-            minus.textContent = "−";
-            minus.setAttribute("aria-label", it.name + " を1つ減らす");
-            minus.disabled = true;
+                        const minus = document.createElement("button");
+                        minus.type = "button";
+                        minus.className = "btn";
+                        minus.textContent = "−";
+                        minus.setAttribute(
+                            "aria-label",
+                            it.name + " を1つ減らす",
+                        );
+                        minus.disabled = true;
 
-            const input = document.createElement("input");
-            input.className = "num";
-            input.type = "number";
-            input.min = "0";
-            input.step = "1";
-            input.value = "0";
-            input.inputMode = "numeric";
-            input.setAttribute("aria-label", it.name + " の数量");
+                        const input = document.createElement("input");
+                        input.className = "num";
+                        input.type = "number";
+                        input.min = "0";
+                        input.step = "1";
+                        input.value = "0";
+                        input.inputMode = "numeric";
+                        input.setAttribute("aria-label", it.name + " の数量");
 
-            const plus = document.createElement("button");
-            plus.type = "button";
-            plus.className = "btn";
-            plus.textContent = "+";
-            plus.setAttribute("aria-label", it.name + " を1つ増やす");
+                        const plus = document.createElement("button");
+                        plus.type = "button";
+                        plus.className = "btn";
+                        plus.textContent = "+";
+                        plus.setAttribute(
+                            "aria-label",
+                            it.name + " を1つ増やす",
+                        );
 
-            const setQty = (v) => {
-              v = Math.max(0, parseInt(v || "0", 10) || 0);
-              input.value = String(v);
-              minus.disabled = v <= 0;
-              updateSummary();
-            };
-            minus.addEventListener("click", () => setQty(parseInt(input.value || "0", 10) - 1));
-            plus.addEventListener("click", () => setQty(parseInt(input.value || "0", 10) + 1));
-            input.addEventListener("input", () => setQty(input.value));
+                        const setQty = (v) => {
+                            v = Math.max(0, parseInt(v || "0", 10) || 0);
+                            input.value = String(v);
+                            minus.disabled = v <= 0;
+                            updateSummary();
+                        };
+                        minus.addEventListener("click", () =>
+                            setQty(parseInt(input.value || "0", 10) - 1),
+                        );
+                        plus.addEventListener("click", () =>
+                            setQty(parseInt(input.value || "0", 10) + 1),
+                        );
+                        input.addEventListener("input", () =>
+                            setQty(input.value),
+                        );
 
-            stepper.append(minus, input, plus);
-            right.append(stepper);
-          } else {
-            const sold = document.createElement("span");
-            sold.className = "sold";
-            sold.textContent = "売切れ";
-            right.append(sold);
-          }
+                        stepper.append(minus, input, plus);
+                        right.append(stepper);
+                    } else {
+                        const sold = document.createElement("span");
+                        sold.className = "sold";
+                        sold.textContent = "売切れ";
+                        right.append(sold);
+                    }
 
-          row.append(info, right);
-          list.append(row);
-        }
-        updateSummary();
-      }
+                    row.append(info, right);
+                    list.append(row);
+                }
+                updateSummary();
+            }
 
-      function collectOrderDetailed() {
-        const items = [];
-        list.querySelectorAll(".item").forEach((r) => {
-          const active = r.dataset.active === "true";
-          if (!active) return;
-          const qty = parseInt(r.querySelector(".num").value || "0", 10);
-          if (qty > 0) {
-            const name = r.querySelector(".name")?.textContent?.trim() || "";
-            const price = Number(r.dataset.price);
-            items.push({
-              itemId: r.dataset.itemId,
-              name,
-              quantity: qty,
-              price,
-              total: price * qty,
+            function collectOrderDetailed() {
+                const items = [];
+                list.querySelectorAll(".item").forEach((r) => {
+                    const active = r.dataset.active === "true";
+                    if (!active) return;
+                    const qty = parseInt(
+                        r.querySelector(".num").value || "0",
+                        10,
+                    );
+                    if (qty > 0) {
+                        const name =
+                            r.querySelector(".name")?.textContent?.trim() || "";
+                        const price = Number(r.dataset.price);
+                        items.push({
+                            itemId: r.dataset.itemId,
+                            name,
+                            quantity: qty,
+                            price,
+                            total: price * qty,
+                        });
+                    }
+                });
+                return items;
+            }
+
+            function collectOrderPayload() {
+                return collectOrderDetailed().map((x) => ({
+                    itemId: x.itemId,
+                    quantity: x.quantity,
+                }));
+            }
+
+            function updateSummary() {
+                const items = collectOrderDetailed();
+                const count = items.reduce((s, x) => s + x.quantity, 0);
+                const total = items.reduce((s, x) => s + x.total, 0);
+                countEl.textContent = count;
+                totalEl.textContent = yen(total);
+                submitBtn.disabled = count === 0 || !seatEl.value.trim();
+            }
+
+            // メニュー取得
+            fetch(`${API_BASE}?action=menu`)
+                .then((r) => r.json())
+                .then((data) => renderMenu(data.menu || []))
+                .catch(() => {
+                    list.innerHTML =
+                        '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
+                });
+
+            // ===== iOS風ローラーピッカー =====
+            function makeWheelItems(el, values) {
+                el.innerHTML = "";
+                values.forEach((v) => {
+                    const d = document.createElement("div");
+                    d.className = "wheel__item";
+                    d.dataset.value = v;
+                    d.textContent = v;
+                    el.appendChild(d);
+                });
+            }
+            function setSelectedClass(el, index) {
+                const items = el.querySelectorAll(".wheel__item");
+                items.forEach((it, i) => {
+                    if (i === index) it.classList.add("selected");
+                    else it.classList.remove("selected");
+                });
+            }
+            function nearestIndex(el) {
+                const t = el.scrollTop;
+                return Math.max(
+                    0,
+                    Math.min(el.children.length - 1, Math.round(t / 44)),
+                );
+            }
+            function scrollToIndex(el, index, behavior = "smooth") {
+                el.scrollTo({ top: index * 44, behavior });
+            }
+            function handleScroll(el, onChange) {
+                if (scrollTimers.get(el)) clearTimeout(scrollTimers.get(el));
+                const idx = nearestIndex(el);
+                setSelectedClass(el, idx);
+                scrollTimers.set(
+                    el,
+                    setTimeout(() => {
+                        scrollToIndex(el, nearestIndex(el), "smooth");
+                        if (onChange)
+                            onChange(
+                                el.children[nearestIndex(el)].dataset.value,
+                            );
+                    }, 80),
+                );
+            }
+            function initWheel(el, values, currentValue, onChange) {
+                makeWheelItems(el, values);
+                let startIdx = 0;
+                if (currentValue) {
+                    const i = values.indexOf(currentValue);
+                    if (i >= 0) startIdx = i;
+                }
+                scrollToIndex(el, startIdx, "auto");
+                setSelectedClass(el, startIdx);
+                if (onChange) onChange(values[startIdx]);
+                el.addEventListener(
+                    "scroll",
+                    () => handleScroll(el, onChange),
+                    { passive: true },
+                );
+                el.addEventListener("click", (e) => {
+                    const item = e.target.closest(".wheel__item");
+                    if (!item) return;
+                    const idx = Array.from(el.children).indexOf(item);
+                    scrollToIndex(el, idx, "smooth");
+                    setSelectedClass(el, idx);
+                    if (onChange) onChange(item.dataset.value);
+                });
+            }
+
+            function openSeatSheet() {
+                const cur = seatEl.value.trim();
+                let curA = null,
+                    curN = null;
+                const m = /^([A-K])\-(\d{2})$/.exec(cur);
+                if (m) {
+                    curA = m[1];
+                    curN = m[2];
+                }
+                tmpArea = curA || AREAS[0];
+                tmpNum = curN || NUMS[0];
+
+                initWheel(wheelArea, AREAS, tmpArea, (v) => {
+                    tmpArea = v;
+                    seatDone.disabled = !(tmpArea && tmpNum);
+                });
+                initWheel(wheelNum, NUMS, tmpNum, (v) => {
+                    tmpNum = v;
+                    seatDone.disabled = !(tmpArea && tmpNum);
+                });
+
+                seatDone.disabled = !(tmpArea && tmpNum);
+
+                seatSheet.hidden = false;
+                requestAnimationFrame(() => {
+                    seatSheet.classList.add("sheet--open");
+                    document.body.classList.add("no-scroll");
+                });
+            }
+            function closeSeatSheet() {
+                seatSheet.classList.remove("sheet--open");
+                document.body.classList.remove("no-scroll");
+                setTimeout(() => {
+                    seatSheet.hidden = true;
+                }, 200);
+            }
+
+            seatOpen.addEventListener("click", openSeatSheet);
+            sheetBackdrop.addEventListener("click", closeSeatSheet);
+            seatCancel.addEventListener("click", closeSeatSheet);
+
+            seatClear.addEventListener("click", () => {
+                tmpArea = null;
+                tmpNum = null;
+                seatEl.value = "";
+                seatDisplay.textContent = "座席を選択";
+                seatDisplay.classList.add("muted");
+                seatDone.disabled = true;
+                updateSummary();
+                scrollToIndex(wheelArea, 0, "smooth");
+                setSelectedClass(wheelArea, 0);
+                scrollToIndex(wheelNum, 0, "smooth");
+                setSelectedClass(wheelNum, 0);
             });
-          }
-        });
-        return items;
-      }
 
-      function collectOrderPayload() {
-        return collectOrderDetailed().map(x => ({ itemId: x.itemId, quantity: x.quantity }));
-      }
-
-      function updateSummary() {
-        const items = collectOrderDetailed();
-        const count = items.reduce((s, x) => s + x.quantity, 0);
-        const total = items.reduce((s, x) => s + x.total, 0);
-        countEl.textContent = count;
-        totalEl.textContent = yen(total);
-        submitBtn.disabled = count === 0 || !seatEl.value.trim();
-      }
-
-      // メニュー取得
-      fetch(`${API_BASE}?action=menu`)
-        .then((r) => r.json())
-        .then((data) => renderMenu(data.menu || []))
-        .catch(() => {
-          list.innerHTML = '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
-        });
-
-      // ===== iOS風ローラーピッカー =====
-      function makeWheelItems(el, values) {
-        el.innerHTML = "";
-        values.forEach((v) => {
-          const d = document.createElement("div");
-          d.className = "wheel__item";
-          d.dataset.value = v;
-          d.textContent = v;
-          el.appendChild(d);
-        });
-      }
-      function setSelectedClass(el, index) {
-        const items = el.querySelectorAll(".wheel__item");
-        items.forEach((it, i) => {
-          if (i === index) it.classList.add("selected");
-          else it.classList.remove("selected");
-        });
-      }
-      function nearestIndex(el) {
-        const t = el.scrollTop;
-        return Math.max(0, Math.min(el.children.length - 1, Math.round(t / 44)));
-      }
-      function scrollToIndex(el, index, behavior = "smooth") {
-        el.scrollTo({ top: index * 44, behavior });
-      }
-      function handleScroll(el, onChange) {
-        if (scrollTimers.get(el)) clearTimeout(scrollTimers.get(el));
-        const idx = nearestIndex(el);
-        setSelectedClass(el, idx);
-        scrollTimers.set(el, setTimeout(() => {
-          scrollToIndex(el, nearestIndex(el), "smooth");
-          if (onChange) onChange(el.children[nearestIndex(el)].dataset.value);
-        }, 80));
-      }
-      function initWheel(el, values, currentValue, onChange) {
-        makeWheelItems(el, values);
-        let startIdx = 0;
-        if (currentValue) {
-          const i = values.indexOf(currentValue);
-          if (i >= 0) startIdx = i;
-        }
-        scrollToIndex(el, startIdx, "auto");
-        setSelectedClass(el, startIdx);
-        if (onChange) onChange(values[startIdx]);
-        el.addEventListener("scroll", () => handleScroll(el, onChange), { passive: true });
-        el.addEventListener("click", (e) => {
-          const item = e.target.closest(".wheel__item");
-          if (!item) return;
-          const idx = Array.from(el.children).indexOf(item);
-          scrollToIndex(el, idx, "smooth");
-          setSelectedClass(el, idx);
-          if (onChange) onChange(item.dataset.value);
-        });
-      }
-
-      function openSeatSheet() {
-        const cur = seatEl.value.trim();
-        let curA = null, curN = null;
-        const m = /^([A-K])\-(\d{2})$/.exec(cur);
-        if (m) { curA = m[1]; curN = m[2]; }
-        tmpArea = curA || AREAS[0];
-        tmpNum = curN || NUMS[0];
-
-        initWheel(wheelArea, AREAS, tmpArea, (v) => { tmpArea = v; seatDone.disabled = !(tmpArea && tmpNum); });
-        initWheel(wheelNum, NUMS, tmpNum, (v) => { tmpNum = v; seatDone.disabled = !(tmpArea && tmpNum); });
-
-        seatDone.disabled = !(tmpArea && tmpNum);
-
-        seatSheet.hidden = false;
-        requestAnimationFrame(() => {
-          seatSheet.classList.add("sheet--open");
-          document.body.classList.add("no-scroll");
-        });
-      }
-      function closeSeatSheet() {
-        seatSheet.classList.remove("sheet--open");
-        document.body.classList.remove("no-scroll");
-        setTimeout(() => { seatSheet.hidden = true; }, 200);
-      }
-
-      seatOpen.addEventListener("click", openSeatSheet);
-      sheetBackdrop.addEventListener("click", closeSeatSheet);
-      seatCancel.addEventListener("click", closeSeatSheet);
-
-      seatClear.addEventListener("click", () => {
-        tmpArea = null;
-        tmpNum = null;
-        seatEl.value = "";
-        seatDisplay.textContent = "座席を選択";
-        seatDisplay.classList.add("muted");
-        seatDone.disabled = true;
-        updateSummary();
-        scrollToIndex(wheelArea, 0, "smooth"); setSelectedClass(wheelArea, 0);
-        scrollToIndex(wheelNum, 0, "smooth"); setSelectedClass(wheelNum, 0);
-      });
-
-      seatDone.addEventListener("click", () => {
-        if (!(tmpArea && tmpNum)) return;
-        const seatStr = `${tmpArea}-${tmpNum}`; // 例: A-02
-        seatEl.value = seatStr;
-        seatDisplay.textContent = `座席 ${seatStr}`;
-        seatDisplay.classList.remove("muted");
-        updateSummary();
-        closeSeatSheet();
-      });
-
-      // ===== ステージ切替 =====
-      function setStage(next) {
-        ui.stage = next;
-        if (next === "build") {
-          // 入力画面
-          list.hidden = false;
-          seatField.hidden = false;
-          confirmPanel.hidden = true;
-          donePanel.hidden = true;
-          actionBar.style.display = ""; // 表示
-          submitBtn.disabled = collectOrderDetailed().length === 0 || !seatEl.value.trim();
-          submitBtn.textContent = "注文する";
-          result.textContent = "";
-          result.className = "msg";
-        } else if (next === "confirm") {
-          // 確認画面
-          buildConfirmList();
-          list.hidden = true;
-          seatField.hidden = true;
-          confirmPanel.hidden = false;
-          donePanel.hidden = true;
-          actionBar.style.display = ""; // 表示（ボタン文言は同じ）
-          submitBtn.disabled = false;
-          submitBtn.textContent = "注文する";
-          result.textContent = "";
-          result.className = "msg";
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        } else if (next === "done") {
-          // 完了画面
-          buildDoneList();
-          list.hidden = true;
-          seatField.hidden = true;
-          confirmPanel.hidden = true;
-          donePanel.hidden = false;
-          actionBar.style.display = "none"; // 完了後は下部バーを隠す
-          result.textContent = "";
-          result.className = "msg";
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      }
-
-      function buildConfirmList() {
-        const items = collectOrderDetailed();
-        confirmList.innerHTML = "";
-        items.forEach(it => {
-          const r = document.createElement("div");
-          r.className = "row-brief";
-          const n = document.createElement("div"); n.className = "brief-name"; n.textContent = it.name;
-          const q = document.createElement("div"); q.className = "brief-qty"; q.textContent = `×${it.quantity}`;
-          const p = document.createElement("div"); p.className = "brief-price"; p.textContent = yen(it.total);
-          r.append(n, q, p);
-          confirmList.append(r);
-        });
-        const total = items.reduce((s, x) => s + x.total, 0);
-        const sum = document.createElement("div");
-        sum.style.textAlign = "right";
-        sum.style.fontWeight = "800";
-        sum.style.marginTop = "6px";
-        sum.textContent = `合計 ${yen(total)}`;
-        confirmList.append(sum);
-      }
-
-      let lastOrderSnapshot = null; // 完了画面用スナップショット
-      function buildDoneList() {
-        const items = lastOrderSnapshot?.items || [];
-        doneList.innerHTML = "";
-        items.forEach(it => {
-          const r = document.createElement("div");
-          r.className = "row-brief";
-          const n = document.createElement("div"); n.className = "brief-name"; n.textContent = it.name;
-          const q = document.createElement("div"); q.className = "brief-qty"; q.textContent = `×${it.quantity}`;
-          const p = document.createElement("div"); p.className = "brief-price"; p.textContent = yen(it.total);
-          r.append(n, q, p);
-          doneList.append(r);
-        });
-        const total = items.reduce((s, x) => s + x.total, 0);
-        const sum = document.createElement("div");
-        sum.style.textAlign = "right";
-        sum.style.fontWeight = "800";
-        sum.style.marginTop = "6px";
-        sum.textContent = `合計 ${yen(total)}`;
-        doneList.append(sum);
-      }
-
-      // 送信フロー（2段階）
-      submitBtn.addEventListener("click", () => {
-        const items = collectOrderDetailed();
-        const seat = seatEl.value.trim();
-
-        if (ui.stage === "build") {
-          if (!items.length) {
-            result.textContent = "数量を入力してください。";
-            result.className = "msg msg--error";
-            return;
-          }
-          if (!seat) {
-            result.textContent = "座席番号を選択してください。";
-            result.className = "msg msg--error";
-            seatOpen.focus();
-            seatOpen.scrollIntoView({ behavior: "smooth", block: "center" });
-            return;
-          }
-          // 確認へ
-          setStage("confirm");
-          return;
-        }
-
-        if (ui.stage === "confirm") {
-          // 実送信
-          submitBtn.disabled = true;
-          submitBtn.textContent = "送信中…";
-          result.textContent = "";
-          result.className = "msg";
-
-          // 完了画面に表示するためのスナップショット保存
-          lastOrderSnapshot = { seat, items: items.map(x => ({ ...x })) };
-
-          fetch(`${API_BASE}?action=order`, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain;charset=UTF-8" },
-            body: JSON.stringify({ seat, items: collectOrderPayload() }),
-          })
-            .then((r) => r.json())
-            .then((res) => {
-              if (!res.ok) throw new Error(res.error || "failed");
-              // 数量をリセット（完了画面ではスナップショットを表示）
-              document.querySelectorAll(".num").forEach(i => i.value = "0");
-              document.querySelectorAll(".btn").forEach(b => { if (b.textContent === "−") b.disabled = true; });
-              updateSummary();
-              // 完了画面へ
-              setStage("done");
-            })
-            .catch((err) => {
-              result.textContent = "送信に失敗しました：" + ((err && err.message) || String(err));
-              result.className = "msg msg--error";
-              // 送信失敗時は確認画面のまま
-            })
-            .finally(() => {
-              submitBtn.textContent = "注文する";
-              submitBtn.disabled = false;
+            seatDone.addEventListener("click", () => {
+                if (!(tmpArea && tmpNum)) return;
+                const seatStr = `${tmpArea}-${tmpNum}`; // 例: A-02
+                seatEl.value = seatStr;
+                seatDisplay.textContent = `座席 ${seatStr}`;
+                seatDisplay.classList.remove("muted");
+                updateSummary();
+                closeSeatSheet();
             });
-        }
-      });
 
-      // 完了→注文に戻る
-      backToOrderBtn.addEventListener("click", () => {
-        lastOrderSnapshot = null;
-        // 入力画面に戻す（座席は保持）
-        setStage("build");
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      });
+            // ===== ステージ切替 =====
+            function setStage(next) {
+                ui.stage = next;
+                if (next === "build") {
+                    // 入力画面
+                    list.hidden = false;
+                    seatField.hidden = false;
+                    confirmPanel.hidden = true;
+                    donePanel.hidden = true;
+                    actionBar.style.display = ""; // 表示
+                    submitBtn.disabled =
+                        collectOrderDetailed().length === 0 ||
+                        !seatEl.value.trim();
+                    submitBtn.textContent = "注文する";
+                    result.textContent = "";
+                    result.className = "msg";
+                } else if (next === "confirm") {
+                    // 確認画面
+                    buildConfirmList();
+                    list.hidden = true;
+                    seatField.hidden = true;
+                    confirmPanel.hidden = false;
+                    donePanel.hidden = true;
+                    actionBar.style.display = ""; // 表示（ボタン文言は同じ）
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "注文する";
+                    result.textContent = "";
+                    result.className = "msg";
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                } else if (next === "done") {
+                    // 完了画面
+                    buildDoneList();
+                    list.hidden = true;
+                    seatField.hidden = true;
+                    confirmPanel.hidden = true;
+                    donePanel.hidden = false;
+                    actionBar.style.display = "none"; // 完了後は下部バーを隠す
+                    result.textContent = "";
+                    result.className = "msg";
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                }
+            }
 
-      // 初期ステージ
-      setStage("build");
-    </script>
-  </body>
+            function buildConfirmList() {
+                const items = collectOrderDetailed();
+                confirmList.innerHTML = "";
+                items.forEach((it) => {
+                    const r = document.createElement("div");
+                    r.className = "row-brief";
+                    const n = document.createElement("div");
+                    n.className = "brief-name";
+                    n.textContent = it.name;
+                    const q = document.createElement("div");
+                    q.className = "brief-qty";
+                    q.textContent = `×${it.quantity}`;
+                    const p = document.createElement("div");
+                    p.className = "brief-price";
+                    p.textContent = yen(it.total);
+                    r.append(n, q, p);
+                    confirmList.append(r);
+                });
+                const total = items.reduce((s, x) => s + x.total, 0);
+                const sum = document.createElement("div");
+                sum.style.textAlign = "right";
+                sum.style.fontWeight = "800";
+                sum.style.marginTop = "6px";
+                sum.textContent = `合計 ${yen(total)}`;
+                confirmList.append(sum);
+            }
+
+            let lastOrderSnapshot = null; // 完了画面用スナップショット
+            function buildDoneList() {
+                const items = lastOrderSnapshot?.items || [];
+                doneList.innerHTML = "";
+                items.forEach((it) => {
+                    const r = document.createElement("div");
+                    r.className = "row-brief";
+                    const n = document.createElement("div");
+                    n.className = "brief-name";
+                    n.textContent = it.name;
+                    const q = document.createElement("div");
+                    q.className = "brief-qty";
+                    q.textContent = `×${it.quantity}`;
+                    const p = document.createElement("div");
+                    p.className = "brief-price";
+                    p.textContent = yen(it.total);
+                    r.append(n, q, p);
+                    doneList.append(r);
+                });
+                const total = items.reduce((s, x) => s + x.total, 0);
+                const sum = document.createElement("div");
+                sum.style.textAlign = "right";
+                sum.style.fontWeight = "800";
+                sum.style.marginTop = "6px";
+                sum.textContent = `合計 ${yen(total)}`;
+                doneList.append(sum);
+            }
+
+            // 送信フロー（2段階）
+            submitBtn.addEventListener("click", () => {
+                const items = collectOrderDetailed();
+                const seat = seatEl.value.trim();
+
+                if (ui.stage === "build") {
+                    if (!items.length) {
+                        result.textContent = "数量を入力してください。";
+                        result.className = "msg msg--error";
+                        return;
+                    }
+                    if (!seat) {
+                        result.textContent = "座席番号を選択してください。";
+                        result.className = "msg msg--error";
+                        seatOpen.focus();
+                        seatOpen.scrollIntoView({
+                            behavior: "smooth",
+                            block: "center",
+                        });
+                        return;
+                    }
+                    // 確認へ
+                    setStage("confirm");
+                    return;
+                }
+
+                if (ui.stage === "confirm") {
+                    // 実送信
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "送信中…";
+                    result.textContent = "";
+                    result.className = "msg";
+
+                    // 完了画面に表示するためのスナップショット保存
+                    lastOrderSnapshot = {
+                        seat,
+                        items: items.map((x) => ({ ...x })),
+                    };
+
+                    fetch(`${API_BASE}?action=order`, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+                        body: JSON.stringify({
+                            seat,
+                            items: collectOrderPayload(),
+                        }),
+                    })
+                        .then((r) => r.json())
+                        .then((res) => {
+                            if (!res.ok) throw new Error(res.error || "failed");
+                            // 数量をリセット（完了画面ではスナップショットを表示）
+                            document
+                                .querySelectorAll(".num")
+                                .forEach((i) => (i.value = "0"));
+                            document.querySelectorAll(".btn").forEach((b) => {
+                                if (b.textContent === "−") b.disabled = true;
+                            });
+                            updateSummary();
+                            // 完了画面へ
+                            setStage("done");
+                        })
+                        .catch((err) => {
+                            result.textContent =
+                                "送信に失敗しました：" +
+                                ((err && err.message) || String(err));
+                            result.className = "msg msg--error";
+                            // 送信失敗時は確認画面のまま
+                        })
+                        .finally(() => {
+                            submitBtn.textContent = "注文する";
+                            submitBtn.disabled = false;
+                        });
+                }
+            });
+
+            // 完了→注文に戻る
+            backToOrderBtn.addEventListener("click", () => {
+                lastOrderSnapshot = null;
+                // 入力画面に戻す（座席は保持）
+                setStage("build");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+
+            // 初期ステージ
+            setStage("build");
+        </script>
+    </body>
 </html>
