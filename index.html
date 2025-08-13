@@ -968,8 +968,7 @@
                 const anyActive = items.some((it) => !!it.active);
                 if (!anyActive) {
                     notice.hidden = false;
-                    notice.textContent =
-                        "モバイルオーダーは試合開始後に受け付けます。";
+                    notice.textContent = "現在、モバイルオーダーを停止中です。";
                 }
 
                 for (const it of items) {
