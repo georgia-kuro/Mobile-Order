@@ -490,15 +490,45 @@
                 color: var(--muted);
                 padding: 8px 12px; /* タッチ領域拡大 */
                 font-size: 0.9rem;
-                /* 罫線を下線に変更し、文字との距離を近くする */
                 text-decoration: underline;
                 text-underline-offset: 2px;
                 text-decoration-thickness: 1px;
                 cursor: pointer;
                 align-self: center; /* 中央揃え */
                 min-height: 44px; /* タッチ領域確保 */
-                margin-top: 0;
+                margin-top: 0; /* 余白を詰める */
             }
+
+            /* 履歴とクレジットの間隔調整 */
+            .after-seat {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px; /* 履歴とクレジットの間隔を狭く */
+            }
+
+            /* クレジット（Powered by ICT-PARK） */
+            .credit {
+                text-align: center;
+                margin-top: 0; /* 余白を詰める */
+            }
+            .credit__pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                color: var(--muted);
+                background: #fff;
+                font-size: 0.8rem; /* 小さめに */
+                line-height: 1;
+            }
+            .credit__mark {
+                font-size: 0.8rem; /* 小さめに */
+                opacity: 0.8;
+            }
+
             .history-list {
                 display: grid;
                 gap: 10px;
@@ -577,35 +607,6 @@
                     transform: rotate(360deg);
                 }
             }
-
-            .credit {
-                text-align: center;
-                margin-top: 8px;
-            }
-            .credit__pill {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 6px 10px;
-                border: 1px solid var(--border);
-                border-radius: 999px;
-                color: var(--muted);
-                background: #fff;
-                font-size: 0.8rem;
-                line-height: 1;
-                margin-top: 0;
-            }
-            .credit__mark {
-                font-size: 0.8rem;
-                opacity: 0.8;
-            }
-
-            .after-seat {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 6px; /* 履歴とクレジットの間隔 */
-            }
         </style>
     </head>
     <body>
@@ -647,7 +648,7 @@
                 </div>
             </div>
 
-            <!-- 注文履歴リンク（弱い見出し扱い。上下余白を確保） -->
+            <!-- 履歴＋クレジット（間隔を詰めて表示） -->
             <div class="after-seat">
                 <button
                     id="historyOpen"
@@ -665,6 +666,8 @@
                     </span>
                 </div>
             </div>
+
+            <div id="result" class="msg" aria-live="polite"></div>
 
             <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
