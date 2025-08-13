@@ -18,7 +18,7 @@
                 --action-h: 80px;
                 --action-gap: 24px;
 
-                /* ピッカー用 */
+                /* ピッカー/シート用 */
                 --row: 44px;
                 --wheel-h: 220px;
                 --sheet-radius: 16px;
@@ -229,7 +229,7 @@
                 color: var(--muted);
             }
 
-            /* 確認・完了パネル（カード内の共通部品） */
+            /* サマリー行表示用 */
             .p-body {
                 display: grid;
                 gap: 8px;
@@ -268,18 +268,6 @@
                 font-size: 0.95rem;
             }
 
-            /* メッセージ */
-            .msg {
-                font-size: 0.95rem;
-                color: var(--muted);
-            }
-            .msg--error {
-                color: #dc2626;
-            }
-            .msg--ok {
-                color: #047857;
-            }
-
             /* 固定アクションバー（共通） */
             .action {
                 position: fixed;
@@ -296,9 +284,6 @@
                 gap: 12px;
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
                 z-index: 50;
-            }
-            .action[hidden] {
-                display: none;
             }
             .summary {
                 font-weight: 800;
@@ -334,7 +319,7 @@
                 );
             }
 
-            /* ボトムシート（iOSピッカー風ローラー＋確認/完了） */
+            /* ボトムシート（iOSピッカー風・確認/完了も同レイアウト） */
             .sheet {
                 position: fixed;
                 inset: 0;
@@ -382,9 +367,15 @@
                 justify-content: space-between;
                 padding: 10px 12px;
                 border-bottom: 1px solid var(--border);
+                gap: 8px;
             }
             .sheet__title {
                 font-weight: 800;
+            }
+            .sheet__actions {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
             }
             .sheet__content {
                 overflow: auto;
@@ -409,11 +400,6 @@
                 padding: 10px 14px;
                 border-radius: 999px;
                 cursor: pointer;
-            }
-
-            /* シート内の補助 */
-            .seat-note {
-                color: var(--muted);
             }
 
             /* ピッカー固有（座席） */
@@ -466,6 +452,9 @@
                 border-bottom: 1px solid #e5e7eb;
                 border-radius: 6px;
             }
+            .seat-note {
+                color: var(--muted);
+            }
         </style>
     </head>
     <body>
@@ -502,7 +491,7 @@
             <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
 
-        <!-- 座席ピッカー（既存） -->
+        <!-- 座席ピッカー（基準UI：タイトル左／右にクリア＋完了／下に閉じる） -->
         <div
             id="seatSheet"
             class="sheet"
@@ -511,7 +500,7 @@
             aria-labelledby="seatTitle"
             hidden
         >
-            <div class="sheet__backdrop" id="sheetBackdrop"></div>
+            <div class="sheet__backdrop" id="seatBackdrop"></div>
             <div class="sheet__panel" role="document">
                 <div class="sheet__header">
                     <div class="sheet__title" id="seatTitle">座席を選択</div>
@@ -546,7 +535,7 @@
             </div>
         </div>
 
-        <!-- 注文内容の確認（新規・下からポップアップ） -->
+        <!-- 注文内容の確認（座席シートと同レイアウト：右上に確定、下に戻る） -->
         <div
             id="confirmSheet"
             class="sheet"
@@ -561,10 +550,15 @@
                     <div class="sheet__title" id="confirmTitle">
                         注文内容の確認
                     </div>
-                    <div class="seat-note" id="confirmSeat"></div>
+                    <div class="sheet__actions">
+                        <button id="confirmOk" class="primary" type="button">
+                            注文を確定する
+                        </button>
+                    </div>
                 </div>
                 <div class="sheet__content">
-                    <div class="p-body">
+                    <div class="seat-note" id="confirmSeat"></div>
+                    <div class="p-body" style="margin-top: 6px">
                         <div id="confirmList" class="brief-list"></div>
                     </div>
                 </div>
@@ -572,14 +566,11 @@
                     <button id="confirmBack" class="btn--ghost" type="button">
                         戻る
                     </button>
-                    <button id="confirmOk" class="primary" type="button">
-                        注文を確定する
-                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- 注文完了（新規・下からポップアップ） -->
+        <!-- 注文完了（座席シートと同レイアウト：右上に戻る、下に閉じる） -->
         <div
             id="resultSheet"
             class="sheet"
@@ -594,10 +585,15 @@
                     <div class="sheet__title" id="resultTitle">
                         ご注文ありがとうございました
                     </div>
-                    <div class="seat-note" id="resultSeat"></div>
+                    <div class="sheet__actions">
+                        <button id="resultBack" class="primary" type="button">
+                            戻る
+                        </button>
+                    </div>
                 </div>
                 <div class="sheet__content">
-                    <div class="hint">
+                    <div class="seat-note" id="resultSeat"></div>
+                    <div class="hint" style="margin-top: 6px">
                         注文を準備しております。まもなくスタッフがお届けしますので、代金をご用意の上、少々お待ちください。
                     </div>
                     <div class="p-body" style="margin-top: 6px">
@@ -605,8 +601,8 @@
                     </div>
                 </div>
                 <div class="sheet__footer">
-                    <button id="resultBack" class="primary" type="button">
-                        戻る
+                    <button id="resultClose" class="btn--ghost" type="button">
+                        閉じる
                     </button>
                 </div>
             </div>
@@ -633,14 +629,13 @@
             const list = document.getElementById("list");
             const notice = document.getElementById("notice");
 
-            const seatField = document.getElementById("seatField");
             const seatEl = document.getElementById("seat");
             const seatOpen = document.getElementById("seatOpen");
             const seatDisplay = document.getElementById("seatDisplay");
 
             // 座席シート
             const seatSheet = document.getElementById("seatSheet");
-            const seatBackdrop = document.getElementById("sheetBackdrop");
+            const seatBackdrop = document.getElementById("seatBackdrop");
             const seatDone = document.getElementById("seatDone");
             const seatCancel = document.getElementById("seatCancel");
             const seatClear = document.getElementById("seatClear");
@@ -661,10 +656,11 @@
             const resultSeat = document.getElementById("resultSeat");
             const resultList = document.getElementById("resultList");
             const resultBack = document.getElementById("resultBack");
+            const resultClose = document.getElementById("resultClose");
 
             const actionBar = document.getElementById("actionBar");
             const submitBtn = document.getElementById("submitBtn");
-            const result = document.getElementById("result");
+            const resultMsg = document.getElementById("result");
             const countEl = document.getElementById("count");
             const totalEl = document.getElementById("total");
 
@@ -701,6 +697,7 @@
                 );
             }).observe(actionBar);
 
+            /* メニュー描画 */
             function renderMenu(items) {
                 list.innerHTML = "";
                 notice.hidden = true;
@@ -830,7 +827,6 @@
                     quantity: x.quantity,
                 }));
             }
-
             function updateSummary() {
                 const items = collectOrderDetailed();
                 const count = items.reduce((s, x) => s + x.quantity, 0);
@@ -849,7 +845,7 @@
                         '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
                 });
 
-            /* 汎用シート制御 */
+            /* シート開閉 */
             function openSheet(sheet) {
                 sheet.hidden = false;
                 requestAnimationFrame(() => {
@@ -878,20 +874,19 @@
             }
             function setSelectedClass(el, index) {
                 const items = el.querySelectorAll(".wheel__item");
-                items.forEach((it, i) => {
-                    if (i === index) it.classList.add("selected");
-                    else it.classList.remove("selected");
-                });
+                items.forEach((it, i) =>
+                    it.classList.toggle("selected", i === index),
+                );
             }
             function nearestIndex(el) {
                 const t = el.scrollTop;
                 return Math.max(
                     0,
-                    Math.min(el.children.length - 1, Math.round(t / 44)),
+                    Math.min(el.children.length - 1, Math.round(t / ROW_H)),
                 );
             }
             function scrollToIndex(el, index, behavior = "smooth") {
-                el.scrollTo({ top: index * 44, behavior });
+                el.scrollTo({ top: index * ROW_H, behavior });
             }
             function handleScroll(el, onChange) {
                 if (scrollTimers.get(el)) clearTimeout(scrollTimers.get(el));
@@ -900,11 +895,9 @@
                 scrollTimers.set(
                     el,
                     setTimeout(() => {
-                        scrollToIndex(el, nearestIndex(el), "smooth");
-                        if (onChange)
-                            onChange(
-                                el.children[nearestIndex(el)].dataset.value,
-                            );
+                        const ni = nearestIndex(el);
+                        scrollToIndex(el, ni, "smooth");
+                        if (onChange) onChange(el.children[ni].dataset.value);
                     }, 80),
                 );
             }
@@ -987,9 +980,9 @@
                 closeSeatSheet();
             });
 
-            /* 注文確認シート */
-            function buildSummary(container) {
-                const items = collectOrderDetailed();
+            /* サマリー構築（確認/完了で共用） */
+            function buildSummary(container, snapshotItems) {
+                const items = snapshotItems || collectOrderDetailed();
                 container.innerHTML = "";
                 items.forEach((it) => {
                     const r = document.createElement("div");
@@ -1013,18 +1006,19 @@
                 container.append(sum);
             }
 
+            /* 1回目：注文ボタン → 確認シート */
             submitBtn.addEventListener("click", () => {
                 const items = collectOrderDetailed();
                 const seat = seatEl.value.trim();
 
                 if (!items.length) {
-                    result.textContent = "数量を入力してください。";
-                    result.className = "msg msg--error";
+                    resultMsg.textContent = "数量を入力してください。";
+                    resultMsg.className = "msg msg--error";
                     return;
                 }
                 if (!seat) {
-                    result.textContent = "座席番号を選択してください。";
-                    result.className = "msg msg--error";
+                    resultMsg.textContent = "座席番号を選択してください。";
+                    resultMsg.className = "msg msg--error";
                     seatOpen.focus();
                     seatOpen.scrollIntoView({
                         behavior: "smooth",
@@ -1033,7 +1027,6 @@
                     return;
                 }
 
-                // 確認シートに内容を反映して開く
                 confirmSeat.textContent = seat ? `座席 ${seat}` : "";
                 buildSummary(confirmList);
                 confirmOk.disabled = false;
@@ -1041,6 +1034,7 @@
                 openSheet(confirmSheet);
             });
 
+            /* 確認シートの操作 */
             confirmBackdrop.addEventListener("click", () =>
                 closeSheet(confirmSheet),
             );
@@ -1072,6 +1066,7 @@
                     .then((r) => r.json())
                     .then((res) => {
                         if (!res.ok) throw new Error(res.error || "failed");
+
                         // 入力をリセット（座席は保持）
                         document
                             .querySelectorAll(".num")
@@ -1081,11 +1076,11 @@
                         });
                         updateSummary();
 
-                        // 完了シートに反映
+                        // 完了シートへ
                         resultSeat.textContent = lastOrderSnapshot.seat
                             ? `座席 ${lastOrderSnapshot.seat}`
                             : "";
-                        buildSummary(resultList);
+                        buildSummary(resultList, lastOrderSnapshot.items);
 
                         closeSheet(confirmSheet);
                         openSheet(resultSheet);
@@ -1100,16 +1095,24 @@
                     });
             });
 
-            /* 完了シート：戻るで初期画面（一覧）へ */
-            resultBackdrop.addEventListener("click", () =>
-                closeSheet(resultSheet),
-            );
-            resultBack.addEventListener("click", () => {
-                closeSheet(resultSheet);
+            /* 完了シートの操作（右上＝戻る／下＝閉じる、いずれも初期画面へ） */
+            function backToBuild() {
                 lastOrderSnapshot = null;
-                // フォーカスを戻す（アクセシビリティ）
+                closeSheet(resultSheet);
                 submitBtn.focus();
-            });
+            }
+            resultBackdrop.addEventListener("click", backToBuild);
+            resultClose.addEventListener("click", backToBuild);
+            resultBack.addEventListener("click", backToBuild);
+
+            /* メニュー初期化 */
+            fetch(`${API_BASE}?action=menu`)
+                .then((r) => r.json())
+                .then((data) => renderMenu(data.menu || []))
+                .catch(() => {
+                    list.innerHTML =
+                        '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
+                });
         </script>
     </body>
 </html>
