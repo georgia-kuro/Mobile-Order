@@ -17,6 +17,11 @@
                 --ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
                 --action-h: 80px;
                 --action-gap: 24px;
+
+                /* ピッカー用 */
+                --row: 44px; /* 1行の高さ（iOSに近い） */
+                --wheel-h: 220px; /* ホイールの表示高さ */
+                --sheet-radius: 16px;
             }
             * {
                 box-sizing: border-box;
@@ -166,7 +171,7 @@
                 -moz-appearance: textfield;
             }
 
-            /* 座席番号（2列ピッカー対応） */
+            /* 座席番号（インライン表示＋ローラーピッカー起動） */
             .field {
                 display: flex;
                 flex-direction: column;
@@ -175,7 +180,7 @@
             .field label {
                 color: var(--muted);
             }
-            .input {
+            .input-like {
                 width: 100%;
                 min-height: 44px;
                 font-size: 1rem;
@@ -186,8 +191,13 @@
                 border-radius: 10px;
                 outline: none;
                 text-align: left;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                cursor: pointer;
             }
-            .input:focus-visible {
+            .input-like:focus-visible {
                 box-shadow: var(--ring);
             }
             .muted {
@@ -257,108 +267,132 @@
                 );
             }
 
-            /* モーダル（2列ピッカー） */
-            .modal[hidden] {
-                display: none;
-            }
-            .modal {
+            /* ボトムシート（iOSピッカー風ローラー） */
+            .sheet {
                 position: fixed;
                 inset: 0;
                 z-index: 100;
+                pointer-events: none; /* 非表示時の誤タップ防止 */
             }
-            .modal__backdrop {
+            .sheet[hidden] {
+                display: none;
+            }
+            .sheet__backdrop {
                 position: absolute;
                 inset: 0;
                 background: rgba(0, 0, 0, 0.35);
+                opacity: 0;
+                transition: opacity 160ms ease;
             }
-            .modal__panel {
+            .sheet__panel {
                 position: absolute;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
+                left: 0;
+                right: 0;
+                bottom: 0;
+                transform: translateY(100%);
                 background: var(--card);
+                border-top-left-radius: var(--sheet-radius);
+                border-top-right-radius: var(--sheet-radius);
                 border: 1px solid var(--border);
-                border-radius: 16px;
-                width: min(560px, 92vw);
-                max-width: 560px;
-                box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+                border-bottom: none;
+                box-shadow: 0 -16px 48px rgba(0, 0, 0, 0.18);
+                transition: transform 200ms ease;
                 display: grid;
-                grid-template-rows: auto 1fr auto;
-                max-height: 85vh;
+                grid-template-rows: auto auto auto;
+                gap: 0;
+                pointer-events: auto; /* シート内は操作可 */
             }
-            .modal__header {
+            .sheet--open .sheet__backdrop {
+                opacity: 1;
+            }
+            .sheet--open .sheet__panel {
+                transform: translateY(0%);
+            }
+            .sheet__header {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 8px;
-                padding: 12px 14px;
+                padding: 10px 12px;
                 border-bottom: 1px solid var(--border);
             }
-            .modal__title {
+            .sheet__title {
                 font-weight: 800;
             }
-            .modal__close {
-                appearance: none;
-                border: 1px solid var(--border);
-                background: #fff;
-                color: var(--text);
-                width: 36px;
-                height: 36px;
-                border-radius: 10px;
-                cursor: pointer;
-                font-size: 18px;
-                line-height: 1;
-            }
-            .picker {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 12px;
-                padding: 12px 14px;
-            }
-            .picker__col {
-                display: grid;
-                grid-template-rows: auto 1fr;
-                gap: 8px;
-                min-width: 0;
-            }
-            .picker__label {
-                color: var(--muted);
-                font-size: 0.92rem;
-            }
-            .picker__select {
-                width: 100%;
-                min-height: 220px; /* ホイールっぽく見えるように複数行表示 */
-                border: 1px solid var(--border);
-                border-radius: 12px;
-                padding: 8px;
-                font-size: 1.05rem;
-                background: #fff;
-                outline: none;
-            }
-            .picker__select:focus-visible {
-                box-shadow: var(--ring);
-            }
-            .modal__footer {
+            .sheet__actions {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 12px 14px;
-                border-top: 1px solid var(--border);
             }
             .btn--ghost {
                 appearance: none;
                 border: 1px solid var(--border);
                 background: #fff;
                 color: var(--text);
-                padding: 10px 14px;
+                padding: 8px 12px;
                 border-radius: 10px;
                 cursor: pointer;
             }
-            .spacer {
-                flex: 1 1 auto;
+            .sheet__wheels {
+                position: relative;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding: 12px 14px;
             }
+            .wheel {
+                position: relative;
+                height: var(--wheel-h);
+                overflow: hidden; /* リストは親でマスク */
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                background: #fff;
+            }
+            .wheel__list {
+                height: 100%;
+                overflow: auto;
+                scroll-snap-type: y mandatory;
+                -webkit-overflow-scrolling: touch;
+                padding-top: calc((var(--wheel-h) - var(--row)) / 2);
+                padding-bottom: calc((var(--wheel-h) - var(--row)) / 2);
+                margin: 0;
+            }
+            .wheel__item {
+                height: var(--row);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.15rem;
+                scroll-snap-align: center;
+                user-select: none;
+            }
+            .wheel__item.selected {
+                font-weight: 800;
+                color: var(--accent);
+            }
+            /* 中央の選択ライン（両列共通の目安線） */
+            .indicator {
+                position: absolute;
+                left: 14px;
+                right: 14px;
+                top: 50%;
+                transform: translateY(-50%);
+                height: var(--row);
+                pointer-events: none;
+                border-top: 1px solid #e5e7eb;
+                border-bottom: 1px solid #e5e7eb;
+                border-radius: 6px;
+            }
+            .sheet__footer {
+                padding: calc(8px + env(safe-area-inset-bottom)) 12px 8px;
+                display: flex;
+                justify-content: flex-end;
+                gap: 8px;
+                border-top: 1px solid var(--border);
+            }
+
             .no-scroll {
                 overflow: hidden;
+                touch-action: none;
             }
         </style>
     </head>
@@ -377,10 +411,10 @@
                 <label for="seatOpen">座席番号</label>
                 <button
                     id="seatOpen"
-                    class="input"
+                    class="input-like"
                     type="button"
                     aria-haspopup="dialog"
-                    aria-controls="seatModal"
+                    aria-controls="seatSheet"
                 >
                     <span id="seatDisplay" class="muted">座席を選択</span>
                 </button>
@@ -392,59 +426,45 @@
             <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
 
-        <!-- 2列ピッカーモーダル -->
+        <!-- iOSの日時ピッカー風：ボトムシート + 2列ローラー -->
         <div
-            id="seatModal"
-            class="modal"
+            id="seatSheet"
+            class="sheet"
             role="dialog"
             aria-modal="true"
             aria-labelledby="seatTitle"
             hidden
         >
-            <div class="modal__backdrop" id="seatBackdrop"></div>
-            <div class="modal__panel" role="document">
-                <div class="modal__header">
-                    <div class="modal__title" id="seatTitle">座席を選択</div>
-                    <button
-                        class="modal__close"
-                        id="seatClose"
-                        aria-label="閉じる"
-                    >
-                        ×
-                    </button>
-                </div>
-                <div class="picker">
-                    <div class="picker__col">
-                        <label class="picker__label" for="areaSelect"
-                            >エリア</label
+            <div class="sheet__backdrop" id="sheetBackdrop"></div>
+            <div class="sheet__panel" role="document">
+                <div class="sheet__header">
+                    <div class="sheet__title" id="seatTitle">座席を選択</div>
+                    <div class="sheet__actions">
+                        <button id="seatClear" class="btn--ghost" type="button">
+                            クリア
+                        </button>
+                        <button
+                            id="seatDone"
+                            class="primary"
+                            type="button"
+                            disabled
                         >
-                        <select
-                            id="areaSelect"
-                            class="picker__select"
-                            size="7"
-                        ></select>
-                    </div>
-                    <div class="picker__col">
-                        <label class="picker__label" for="numberSelect"
-                            >番号</label
-                        >
-                        <select
-                            id="numberSelect"
-                            class="picker__select"
-                            size="7"
-                        ></select>
+                            完了
+                        </button>
                     </div>
                 </div>
-                <div class="modal__footer">
-                    <button id="seatClear" class="btn--ghost" type="button">
-                        クリア
-                    </button>
-                    <div class="spacer"></div>
+                <div class="sheet__wheels">
+                    <div class="wheel">
+                        <div class="wheel__list" id="wheelArea"></div>
+                    </div>
+                    <div class="wheel">
+                        <div class="wheel__list" id="wheelNum"></div>
+                    </div>
+                    <div class="indicator" aria-hidden="true"></div>
+                </div>
+                <div class="sheet__footer">
                     <button id="seatCancel" class="btn--ghost" type="button">
-                        キャンセル
-                    </button>
-                    <button id="seatOk" class="primary" type="button" disabled>
-                        決定
+                        閉じる
                     </button>
                 </div>
             </div>
@@ -467,17 +487,19 @@
             const API_BASE =
                 "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
             const list = document.getElementById("list");
+
             const seatEl = document.getElementById("seat");
             const seatOpen = document.getElementById("seatOpen");
             const seatDisplay = document.getElementById("seatDisplay");
-            const seatModal = document.getElementById("seatModal");
-            const seatBackdrop = document.getElementById("seatBackdrop");
-            const seatClose = document.getElementById("seatClose");
+
+            // シート関連
+            const seatSheet = document.getElementById("seatSheet");
+            const sheetBackdrop = document.getElementById("sheetBackdrop");
+            const seatDone = document.getElementById("seatDone");
             const seatCancel = document.getElementById("seatCancel");
-            const seatOk = document.getElementById("seatOk");
             const seatClear = document.getElementById("seatClear");
-            const areaSelect = document.getElementById("areaSelect");
-            const numberSelect = document.getElementById("numberSelect");
+            const wheelArea = document.getElementById("wheelArea");
+            const wheelNum = document.getElementById("wheelNum");
 
             const submitBtn = document.getElementById("submitBtn");
             const result = document.getElementById("result");
@@ -500,9 +522,14 @@
             ];
             const NUMS = Array.from({ length: 21 }, (_, i) => String(i + 1));
 
+            const ROW_H = 44; // px（CSSの --row と合わせる）
+            let tmpArea = null;
+            let tmpNum = null;
+            let scrollTimers = new Map(); // デバウンス用
+
             const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
 
-            // 固定バーの実寸を検知して --action-h を更新（隠れ防止）
+            // 固定バー高さをCSS変数に反映（隠れ防止）
             new ResizeObserver(() => {
                 const h = actionBar.offsetHeight || 80;
                 document.documentElement.style.setProperty(
@@ -606,7 +633,6 @@
                 totalEl.textContent = yen(total);
                 submitBtn.disabled = count === 0 || !seatEl.value.trim();
             }
-            seatEl.addEventListener("input", updateSummary);
 
             // メニュー取得
             fetch(`${API_BASE}?action=menu`)
@@ -617,91 +643,149 @@
                         '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
                 });
 
-            // 座席ピッカー初期化
-            function populateSeatOptions() {
-                if (!areaSelect.options.length) {
-                    AREAS.forEach((a) => {
-                        const opt = document.createElement("option");
-                        opt.value = a;
-                        opt.textContent = a;
-                        areaSelect.append(opt);
-                    });
+            // ===== iOS風ローラーピッカー =====
+            function makeWheelItems(el, values) {
+                el.innerHTML = "";
+                values.forEach((v, i) => {
+                    const d = document.createElement("div");
+                    d.className = "wheel__item";
+                    d.dataset.value = v;
+                    d.textContent = v;
+                    el.appendChild(d);
+                });
+            }
+            function setSelectedClass(el, index) {
+                const items = el.querySelectorAll(".wheel__item");
+                items.forEach((it, i) => {
+                    if (i === index) it.classList.add("selected");
+                    else it.classList.remove("selected");
+                });
+            }
+            function nearestIndex(el) {
+                const t = el.scrollTop;
+                return Math.max(
+                    0,
+                    Math.min(el.children.length - 1, Math.round(t / ROW_H)),
+                );
+            }
+            function scrollToIndex(el, index, behavior = "smooth") {
+                el.scrollTo({ top: index * ROW_H, behavior });
+            }
+            function handleScroll(el, onChange) {
+                // デバウンスして停止時にスナップ補正
+                if (scrollTimers.get(el)) clearTimeout(scrollTimers.get(el));
+                const idx = nearestIndex(el);
+                setSelectedClass(el, idx);
+                scrollTimers.set(
+                    el,
+                    setTimeout(() => {
+                        scrollToIndex(el, nearestIndex(el), "smooth");
+                        if (onChange)
+                            onChange(
+                                el.children[nearestIndex(el)].dataset.value,
+                            );
+                    }, 80),
+                );
+            }
+            function initWheel(el, values, currentValue, onChange) {
+                makeWheelItems(el, values);
+                let startIdx = 0;
+                if (currentValue) {
+                    const i = values.indexOf(currentValue);
+                    if (i >= 0) startIdx = i;
                 }
-                if (!numberSelect.options.length) {
-                    NUMS.forEach((n) => {
-                        const opt = document.createElement("option");
-                        opt.value = n;
-                        opt.textContent = n;
-                        numberSelect.append(opt);
-                    });
-                }
+                // 初期位置へ（瞬時）
+                scrollToIndex(el, startIdx, "auto");
+                setSelectedClass(el, startIdx);
+                if (onChange) onChange(values[startIdx]);
+                el.addEventListener(
+                    "scroll",
+                    () => handleScroll(el, onChange),
+                    { passive: true },
+                );
+                el.addEventListener("click", (e) => {
+                    const item = e.target.closest(".wheel__item");
+                    if (!item) return;
+                    const idx = Array.from(el.children).indexOf(item);
+                    scrollToIndex(el, idx, "smooth");
+                    setSelectedClass(el, idx);
+                    if (onChange) onChange(item.dataset.value);
+                });
             }
 
-            function openSeatModal() {
-                populateSeatOptions();
-                // 既存値を分解
-                const v = seatEl.value.trim();
-                let curA = "",
-                    curN = "";
-                if (v && /^[A-K]-([1-9]|1\d|2[01])$/.test(v)) {
-                    const [a, n] = v.split("-");
-                    curA = a;
-                    curN = n;
+            function openSeatSheet() {
+                // 現在値を分解
+                const cur = seatEl.value.trim();
+                let curA = null,
+                    curN = null;
+                const m = /^([A-K])\-(\d{1,2})$/.exec(cur);
+                if (m) {
+                    curA = m[1];
+                    curN = String(
+                        Math.max(1, Math.min(21, parseInt(m[2], 10))),
+                    );
                 }
-                areaSelect.value = curA || "";
-                numberSelect.value = curN || "";
-                seatOk.disabled = !(areaSelect.value && numberSelect.value);
+                tmpArea = curA || AREAS[0];
+                tmpNum = curN || NUMS[0];
 
-                seatModal.hidden = false;
-                document.body.classList.add("no-scroll");
-                // フォーカス
-                (areaSelect.value ? numberSelect : areaSelect).focus();
+                // 初期化（既にイベントが付いていてもOK）
+                initWheel(wheelArea, AREAS, tmpArea, (v) => {
+                    tmpArea = v;
+                    seatDone.disabled = !(tmpArea && tmpNum);
+                });
+                initWheel(wheelNum, NUMS, tmpNum, (v) => {
+                    tmpNum = v;
+                    seatDone.disabled = !(tmpArea && tmpNum);
+                });
+
+                seatDone.disabled = !(tmpArea && tmpNum);
+
+                // 表示
+                seatSheet.hidden = false;
+                // アニメーション適用のため次フレームでクラス付与
+                requestAnimationFrame(() => {
+                    seatSheet.classList.add("sheet--open");
+                    document.body.classList.add("no-scroll");
+                });
             }
-            function closeSeatModal() {
-                seatModal.hidden = true;
+            function closeSeatSheet() {
+                seatSheet.classList.remove("sheet--open");
                 document.body.classList.remove("no-scroll");
-                seatOpen.focus();
+                setTimeout(() => {
+                    seatSheet.hidden = true;
+                }, 200);
             }
 
-            seatOpen.addEventListener("click", openSeatModal);
-            seatBackdrop.addEventListener("click", closeSeatModal);
-            seatClose.addEventListener("click", closeSeatModal);
-            seatCancel.addEventListener("click", closeSeatModal);
-            window.addEventListener("keydown", (e) => {
-                if (!seatModal.hidden && e.key === "Escape") {
-                    e.preventDefault();
-                    closeSeatModal();
-                }
+            seatOpen.addEventListener("click", openSeatSheet);
+            sheetBackdrop.addEventListener("click", closeSeatSheet);
+            seatCancel.addEventListener("click", closeSeatSheet);
+
+            seatClear.addEventListener("click", () => {
+                tmpArea = null;
+                tmpNum = null;
+                seatEl.value = "";
+                seatDisplay.textContent = "座席を選択";
+                seatDisplay.classList.add("muted");
+                seatDone.disabled = true;
+                updateSummary();
+                // ホイールは先頭へ
+                scrollToIndex(wheelArea, 0, "smooth");
+                setSelectedClass(wheelArea, 0);
+                scrollToIndex(wheelNum, 0, "smooth");
+                setSelectedClass(wheelNum, 0);
             });
 
-            areaSelect.addEventListener("change", () => {
-                seatOk.disabled = !(areaSelect.value && numberSelect.value);
-            });
-            numberSelect.addEventListener("change", () => {
-                seatOk.disabled = !(areaSelect.value && numberSelect.value);
-            });
-
-            seatOk.addEventListener("click", () => {
-                if (!(areaSelect.value && numberSelect.value)) return;
-                const seatStr = `${areaSelect.value}-${numberSelect.value}`;
+            seatDone.addEventListener("click", () => {
+                if (!(tmpArea && tmpNum)) return;
+                const seatStr = `${tmpArea}-${tmpNum}`;
                 seatEl.value = seatStr;
                 seatDisplay.textContent = `座席 ${seatStr}`;
                 seatDisplay.classList.remove("muted");
                 updateSummary();
-                closeSeatModal();
+                closeSeatSheet();
             });
 
-            seatClear.addEventListener("click", () => {
-                areaSelect.value = "";
-                numberSelect.value = "";
-                seatEl.value = "";
-                seatDisplay.textContent = "座席を選択";
-                seatDisplay.classList.add("muted");
-                seatOk.disabled = true;
-                updateSummary();
-            });
-
-            // 注文送信（プリフライト回避のため text/plain）
+            // ===== 注文送信 =====
             submitBtn.addEventListener("click", () => {
                 const items = collectOrder();
                 const seat = seatEl.value.trim();
@@ -741,9 +825,6 @@
                         document.querySelectorAll(".btn").forEach((b) => {
                             if (b.textContent === "−") b.disabled = true;
                         });
-                        // 座席は残す（連続注文向け）。リセットしたい場合は以下2行を有効化。
-                        // seatEl.value = "";
-                        // seatDisplay.textContent = "座席を選択"; seatDisplay.classList.add("muted");
                         updateSummary();
                         window.scrollTo({ top: 0, behavior: "smooth" });
                     })
