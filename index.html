@@ -1,4 +1,3 @@
-<!doctype html>
 <html lang="ja">
     <head>
         <meta charset="utf-8" />
@@ -8,9 +7,35 @@
         />
         <title>モバイルオーダー（注文）</title>
         <style>
-            /* 既存UIを簡略（必要に応じて調整） */
+            :root {
+                --bg: #f7f7fb;
+                --card: #fff;
+                --text: #121826;
+                --muted: #6b7280;
+                --border: #e6e7ec;
+                --accent: #2563eb;
+                --ring: 0 0 0 3px rgba(37, 99, 235, 0.25);
+                --action-h: 80px;
+                --action-gap: 24px;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            html {
+                font-size: 16px;
+                scroll-padding-bottom: calc(
+                    var(--action-h) + var(--action-gap) +
+                        env(safe-area-inset-bottom)
+                );
+            }
             body {
                 margin: 0;
+                background: var(--bg);
+                color: var(--text);
                 font-family:
                     system-ui,
                     -apple-system,
@@ -19,14 +44,35 @@
                     "Helvetica Neue",
                     Arial,
                     sans-serif;
-                background: #f7f7fb;
-                color: #121826;
+                -webkit-text-size-adjust: 100%;
+                -webkit-tap-highlight-color: transparent;
+                padding: 16px;
+                line-height: 1.5;
+                font-feature-settings:
+                    "tnum" 1,
+                    "cv01" 1;
             }
             .container {
+                width: 100%;
                 max-width: 640px;
                 margin: 0 auto;
-                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
             }
+            h1 {
+                margin: 0;
+                font-size: clamp(18px, 4.5vw, 22px);
+                font-weight: 800;
+                letter-spacing: 0.01em;
+            }
+            .sub {
+                margin-top: 4px;
+                color: var(--muted);
+                font-size: 0.92rem;
+            }
+
+            /* 商品リスト */
             .list {
                 display: flex;
                 flex-direction: column;
@@ -37,74 +83,118 @@
                 grid-template-columns: 1fr auto;
                 gap: 8px 12px;
                 align-items: center;
-                background: #fff;
-                border: 1px solid #e6e7ec;
+                background: var(--card);
+                border: 1px solid var(--border);
                 border-radius: 12px;
                 padding: 12px;
             }
+            .info {
+                min-width: 0;
+            }
             .name {
                 font-weight: 700;
+                line-height: 1.3;
+                word-break: break-word;
+                overflow-wrap: anywhere;
             }
             .meta {
-                color: #6b7280;
+                margin-top: 6px;
+                color: var(--muted);
+                font-size: 0.95rem;
             }
+            .price {
+                font-weight: 800;
+            }
+
+            /* ステッパー */
             .stepper {
                 display: flex;
                 align-items: center;
                 gap: 10px;
             }
             .btn {
+                appearance: none;
+                border: 1px solid var(--border);
+                background: #fff;
+                color: var(--text);
                 width: 44px;
                 height: 44px;
                 border-radius: 999px;
-                border: 1px solid #e6e7ec;
-                background: #fff;
+                font-size: 20px;
+                line-height: 1;
                 cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.05s ease;
             }
+            .btn:active {
+                transform: translateY(1px);
+            }
+            .btn:focus-visible {
+                outline: none;
+                box-shadow: var(--ring);
+            }
+            .btn[disabled] {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
+
+            /* 数値入力（スピナー非表示） */
             .num {
                 width: 76px;
                 min-height: 44px;
                 text-align: center;
-                border: 1px solid #e6e7ec;
+                font-size: 1rem;
+                padding: 10px 8px;
+                border: 1px solid var(--border);
                 border-radius: 10px;
+                background: #fff;
+                color: var(--text);
+                outline: none;
+                scroll-margin-bottom: calc(var(--action-h) + var(--action-gap));
             }
+            .num:focus-visible {
+                box-shadow: var(--ring);
+            }
+            input[type="number"]::-webkit-outer-spin-button,
+            input[type="number"]::-webkit-inner-spin-button {
+                -webkit-appearance: none;
+                margin: 0;
+            }
+            input[type="number"] {
+                -moz-appearance: textfield;
+            }
+
+            /* 座席番号 */
             .field {
-                margin-top: 12px;
                 display: flex;
                 flex-direction: column;
                 gap: 6px;
             }
+            .field label {
+                color: var(--muted);
+            }
             .input {
+                width: 100%;
                 min-height: 44px;
-                border: 1px solid #e6e7ec;
-                border-radius: 10px;
+                font-size: 1rem;
                 padding: 12px 14px;
-            }
-            .action {
-                position: fixed;
-                left: 16px;
-                right: 16px;
-                bottom: 16px;
                 background: #fff;
-                border: 1px solid #e6e7ec;
-                border-radius: 16px;
-                padding: 10px 12px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
+                color: var(--text);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                outline: none;
+                scroll-margin-bottom: calc(var(--action-h) + var(--action-gap));
             }
-            .primary {
-                background: #2563eb;
-                color: #fff;
-                border: none;
-                min-height: 44px;
-                padding: 0 16px;
-                border-radius: 999px;
-                cursor: pointer;
+            .input:focus-visible {
+                box-shadow: var(--ring);
             }
+
+            /* メッセージ */
             .msg {
-                margin-top: 8px;
-                color: #6b7280;
+                font-size: 0.95rem;
+                color: var(--muted);
             }
             .msg--error {
                 color: #dc2626;
@@ -112,12 +202,69 @@
             .msg--ok {
                 color: #047857;
             }
+
+            /* 固定アクションバー */
+            .action {
+                position: fixed;
+                left: 16px;
+                right: 16px;
+                bottom: max(16px, env(safe-area-inset-bottom));
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                padding: 10px 12px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+                z-index: 50;
+            }
+            .summary {
+                font-weight: 800;
+                white-space: nowrap;
+            }
+            .summary [data-amount] {
+                font-variant-numeric: tabular-nums;
+            }
+            .primary {
+                appearance: none;
+                border: none;
+                background: var(--accent);
+                color: #fff;
+                padding: 12px 18px;
+                min-height: 44px;
+                border-radius: 999px;
+                font-size: 1rem;
+                cursor: pointer;
+                white-space: nowrap;
+                box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+            }
+            .primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+                box-shadow: none;
+            }
+
+            /* 下スペーサー（固定バーに隠れないよう確保） */
+            .bottom-spacer {
+                height: calc(
+                    var(--action-h) + var(--action-gap) +
+                        env(safe-area-inset-bottom)
+                );
+            }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>ご注文</h1>
-            <div id="list" class="list">読み込み中…</div>
+            <header>
+                <div>
+                    <h1>ご注文</h1>
+                    <div class="sub">数量を入力して「注文する」をタップ</div>
+                </div>
+            </header>
+
+            <div id="list" class="list" aria-live="polite">読み込み中…</div>
 
             <div class="field">
                 <label for="seat">座席番号</label>
@@ -131,31 +278,52 @@
             </div>
 
             <div id="result" class="msg" aria-live="polite"></div>
+
+            <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
 
-        <div class="action" role="region" aria-label="注文の合計">
-            <div>
-                <span id="count">0</span> 点 / 合計 <span id="total">¥0</span>
+        <div
+            class="action"
+            id="actionBar"
+            role="region"
+            aria-label="注文の合計"
+        >
+            <div class="summary" aria-live="polite">
+                <span id="count">0</span> 点 / 合計
+                <span id="total" data-amount>¥0</span>
             </div>
             <button id="submitBtn" class="primary" disabled>注文する</button>
         </div>
 
         <script>
             const API_BASE =
-                "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec";
+                "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
             const list = document.getElementById("list");
             const seatEl = document.getElementById("seat");
             const submitBtn = document.getElementById("submitBtn");
             const result = document.getElementById("result");
+            const actionBar = document.getElementById("actionBar");
             const countEl = document.getElementById("count");
             const totalEl = document.getElementById("total");
 
             const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
 
+            // 固定バーの実寸を検知して --action-h を更新（隠れ防止）
+            new ResizeObserver(() => {
+                const h = actionBar.offsetHeight || 80;
+                document.documentElement.style.setProperty(
+                    "--action-h",
+                    h + "px",
+                );
+            }).observe(actionBar);
+
             function renderMenu(items) {
                 list.innerHTML = "";
                 if (!items || !items.length) {
-                    list.textContent = "現在ご注文いただける商品がありません。";
+                    const div = document.createElement("div");
+                    div.className = "msg";
+                    div.textContent = "現在ご注文いただける商品がありません。";
+                    list.append(div);
                     submitBtn.disabled = true;
                     return;
                 }
@@ -165,37 +333,52 @@
                     row.dataset.itemId = it.id;
                     row.dataset.price = it.price;
 
-                    const left = document.createElement("div");
-                    left.innerHTML = `<div class="name">${it.name}</div><div class="meta">${yen(it.price)}（税込）</div>`;
+                    const info = document.createElement("div");
+                    info.className = "info";
+                    info.innerHTML = `<div class="name">${it.name}</div>
+                      <div class="meta"><span class="price">${yen(it.price)}</span>（税込）</div>`;
 
                     const stepper = document.createElement("div");
                     stepper.className = "stepper";
+
                     const minus = document.createElement("button");
+                    minus.type = "button";
                     minus.className = "btn";
                     minus.textContent = "−";
+                    minus.setAttribute("aria-label", it.name + " を1つ減らす");
                     minus.disabled = true;
-                    const num = document.createElement("input");
-                    num.className = "num";
-                    num.type = "number";
-                    num.value = "0";
-                    num.min = "0";
-                    num.step = "1";
+
+                    const input = document.createElement("input");
+                    input.className = "num";
+                    input.type = "number";
+                    input.min = "0";
+                    input.step = "1";
+                    input.value = "0";
+                    input.inputMode = "numeric";
+                    input.setAttribute("aria-label", it.name + " の数量");
+
                     const plus = document.createElement("button");
+                    plus.type = "button";
                     plus.className = "btn";
                     plus.textContent = "+";
+                    plus.setAttribute("aria-label", it.name + " を1つ増やす");
 
                     const setQty = (v) => {
-                        v = Math.max(0, v | 0);
-                        num.value = String(v);
+                        v = Math.max(0, parseInt(v || "0", 10) || 0);
+                        input.value = String(v);
                         minus.disabled = v <= 0;
                         updateSummary();
                     };
-                    minus.onclick = () => setQty(parseInt(num.value, 10) - 1);
-                    plus.onclick = () => setQty(parseInt(num.value, 10) + 1);
-                    num.oninput = () => setQty(parseInt(num.value || "0", 10));
+                    minus.addEventListener("click", () =>
+                        setQty(parseInt(input.value || "0", 10) - 1),
+                    );
+                    plus.addEventListener("click", () =>
+                        setQty(parseInt(input.value || "0", 10) + 1),
+                    );
+                    input.addEventListener("input", () => setQty(input.value));
 
-                    stepper.append(minus, num, plus);
-                    row.append(left, stepper);
+                    stepper.append(minus, input, plus);
+                    row.append(info, stepper);
                     list.append(row);
                 }
                 updateSummary();
@@ -217,6 +400,7 @@
                 });
                 return items;
             }
+
             function updateSummary() {
                 const items = collectOrder();
                 const count = items.reduce((s, x) => s + x.quantity, 0);
@@ -235,10 +419,11 @@
                 .then((r) => r.json())
                 .then((data) => renderMenu(data.menu || []))
                 .catch(() => {
-                    list.textContent = "メニュー読み込みに失敗しました。";
+                    list.innerHTML =
+                        '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
                 });
 
-            // 注文送信（Content-Type: text/plain でプリフライト回避）
+            // 注文送信（プリフライト回避のため text/plain）
             submitBtn.addEventListener("click", () => {
                 const items = collectOrder();
                 const seat = seatEl.value.trim();
@@ -250,6 +435,11 @@
                 if (!seat) {
                     result.textContent = "座席番号を入力してください。";
                     result.className = "msg msg--error";
+                    seatEl.focus();
+                    seatEl.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center",
+                    });
                     return;
                 }
 
@@ -274,6 +464,7 @@
                             if (b.textContent === "−") b.disabled = true;
                         });
                         updateSummary();
+                        window.scrollTo({ top: 0, behavior: "smooth" });
                     })
                     .catch((err) => {
                         result.textContent =
@@ -286,6 +477,390 @@
                         submitBtn.disabled = false;
                     });
             });
+        </script>
+    </body>
+</html>
+
+kitchen.html（キッチン・見た目の調整版）
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width,initial-scale=1,viewport-fit=cover"
+        />
+        <title>モバイルオーダー（キッチン）</title>
+        <style>
+            :root {
+                --bg: #f7f7fb;
+                --card: #fff;
+                --text: #121826;
+                --muted: #6b7280;
+                --border: #e6e7ec;
+                --accent: #2563eb;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            html,
+            body {
+                height: 100%;
+            }
+            body {
+                margin: 0;
+                background: var(--bg);
+                color: var(--text);
+                font-family:
+                    system-ui,
+                    -apple-system,
+                    "Segoe UI",
+                    Roboto,
+                    "Helvetica Neue",
+                    Arial,
+                    sans-serif;
+                -webkit-text-size-adjust: 100%;
+                -webkit-tap-highlight-color: transparent;
+                padding: 16px;
+                line-height: 1.5;
+                font-feature-settings:
+                    "tnum" 1,
+                    "cv01" 1;
+            }
+            .wrap {
+                max-width: 1400px;
+                margin: 0 auto;
+                height: calc(100vh - 32px);
+                display: grid;
+                grid-template-columns: minmax(320px, 420px) 1fr;
+                gap: 16px;
+                min-height: 0;
+            }
+
+            /* 左 */
+            .panel {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+            .panel header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 12px 14px;
+                border-bottom: 1px solid var(--border);
+            }
+            .btn {
+                appearance: none;
+                border: 1px solid var(--border);
+                background: #fff;
+                color: var(--text);
+                padding: 6px 10px;
+                border-radius: 999px;
+                cursor: pointer;
+            }
+            .rows {
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                overflow: auto;
+                min-height: 0;
+            }
+            .row {
+                display: grid;
+                grid-template-columns: 48px 64px 1fr 136px 14px;
+                align-items: center;
+                gap: 8px;
+                padding: 4px 10px;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+                background: #fff;
+            }
+            .row:hover {
+                background: #fafafa;
+            }
+            .c-number {
+                font-weight: 800;
+                color: var(--accent);
+                text-align: center;
+            }
+            .c-time {
+                color: var(--muted);
+                text-align: center;
+            }
+            .c-seat {
+                font-weight: 800;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .c-sum {
+                text-align: right;
+                white-space: nowrap;
+            }
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+            }
+            .dot.pending {
+                background: #f59e0b;
+            }
+            .dot.ready {
+                background: #10b981;
+            }
+            .empty {
+                padding: 16px;
+                color: var(--muted);
+                text-align: center;
+            }
+
+            /* 右 */
+            .right {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                display: flex;
+                flex-direction: column;
+                min-height: 0;
+            }
+            .topbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 12px 14px;
+                border-bottom: 1px solid var(--border);
+            }
+            .detail {
+                padding: 12px 14px;
+                overflow: auto;
+                flex: 1 1 auto;
+            }
+            .footer {
+                padding: 12px 14px;
+                border-top: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+            }
+            .primary {
+                background: var(--accent);
+                color: #fff;
+                border: none;
+                border-radius: 999px;
+                padding: 8px 16px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="panel">
+                <header>
+                    <div>注文一覧</div>
+                    <button id="refreshBtn" class="btn">更新</button>
+                </header>
+                <ul id="rows" class="rows"></ul>
+            </section>
+
+            <section class="right">
+                <div class="topbar">
+                    <div>
+                        <span
+                            id="orderNumber"
+                            style="color: #2563eb; font-weight: 800"
+                        ></span>
+                        <span id="detailSeat">注文を選択</span>
+                    </div>
+                    <div><span id="detailTime"></span></div>
+                </div>
+                <div id="detailBody" class="detail">
+                    左の一覧から注文を選択してください。
+                </div>
+                <div class="footer">
+                    <div id="detailSummary"></div>
+                    <button id="doneBtn" class="primary" disabled>
+                        準備完了
+                    </button>
+                </div>
+            </section>
+        </div>
+
+        <script>
+            const API_BASE =
+                "https://script.google.com/macros/s/XXXXXXXXXXXXXXXX/exec"; // ←置き換え
+            const rowsEl = document.getElementById("rows");
+            const refreshBtn = document.getElementById("refreshBtn");
+            const orderNumber = document.getElementById("orderNumber");
+            const detailSeat = document.getElementById("detailSeat");
+            const detailTime = document.getElementById("detailTime");
+            const detailBody = document.getElementById("detailBody");
+            const detailSummary = document.getElementById("detailSummary");
+            const doneBtn = document.getElementById("doneBtn");
+
+            const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
+            const fmtHM = (v) => {
+                if (!v && v !== 0) return "--:--";
+                let d = null;
+                if (typeof v === "number") d = new Date(v);
+                else if (typeof v === "string") d = new Date(v);
+                else if (v instanceof Date) d = v;
+                if (!d || isNaN(d.getTime())) return "--:--";
+                return (
+                    String(d.getHours()).padStart(2, "0") +
+                    ":" +
+                    String(d.getMinutes()).padStart(2, "0")
+                );
+            };
+
+            const state = { pending: [], ready: [], selectedId: null };
+
+            function makeRow(o) {
+                const li = document.createElement("li");
+                li.className = "row";
+                li.dataset.id = o.groupId;
+                const c1 = document.createElement("div");
+                c1.className = "c-number";
+                c1.textContent = o.orderNumber
+                    ? `#${String(o.orderNumber).padStart(3, "0")}`
+                    : "--";
+                const c2 = document.createElement("div");
+                c2.className = "c-time";
+                const t =
+                    o.status === "READY"
+                        ? o.readyTs || o.updatedTs || o.createdTs
+                        : o.createdTs;
+                c2.textContent = fmtHM(t);
+                const c3 = document.createElement("div");
+                c3.className = "c-seat";
+                c3.textContent = o.seat ? `座席 ${o.seat}` : "テイクアウト";
+                const c4 = document.createElement("div");
+                c4.className = "c-sum";
+                c4.innerHTML = `<span class="qty">${o.totalQuantity}点</span> <span class="amt">${yen(o.totalAmount)}</span>`;
+                const c5 = document.createElement("div");
+                const dot = document.createElement("span");
+                dot.className =
+                    "dot " + (o.status === "READY" ? "ready" : "pending");
+                c5.append(dot);
+                li.append(c1, c2, c3, c4, c5);
+                li.onclick = () => {
+                    state.selectedId = o.groupId;
+                    renderList();
+                    renderDetail();
+                };
+                return li;
+            }
+
+            function renderList() {
+                rowsEl.innerHTML = "";
+                const merged = [...state.pending, ...state.ready];
+                if (!merged.length) {
+                    const d = document.createElement("div");
+                    d.className = "empty";
+                    d.textContent = "現在、注文はありません。";
+                    rowsEl.append(d);
+                    return;
+                }
+                merged.forEach((o) => rowsEl.append(makeRow(o)));
+            }
+
+            function renderDetail() {
+                const all = [...state.pending, ...state.ready];
+                const o = all.find((x) => x.groupId === state.selectedId);
+                if (!o) {
+                    orderNumber.textContent = "";
+                    detailSeat.textContent = "注文を選択";
+                    detailTime.textContent = "";
+                    detailBody.textContent =
+                        "左の一覧から注文を選択してください。";
+                    detailSummary.textContent = "";
+                    doneBtn.disabled = true;
+                    doneBtn.textContent = "準備完了";
+                    doneBtn.onclick = null;
+                    return;
+                }
+                orderNumber.textContent = o.orderNumber
+                    ? `注文 #${String(o.orderNumber).padStart(3, "0")}`
+                    : "";
+                detailSeat.textContent = o.seat
+                    ? `座席 ${o.seat}`
+                    : "テイクアウト";
+                const t =
+                    o.status === "READY"
+                        ? o.readyTs || o.updatedTs || o.createdTs
+                        : o.createdTs;
+                detailTime.textContent = fmtHM(t);
+
+                const items = document.createElement("div");
+                o.items.forEach((it) => {
+                    const r = document.createElement("div");
+                    r.textContent = `${it.itemName} ×${it.quantity} … ${yen(it.totalPrice)}`;
+                    items.append(r);
+                });
+                detailBody.innerHTML = "";
+                detailBody.append(items);
+                if (o.note) {
+                    const n = document.createElement("div");
+                    n.textContent = `備考: ${o.note}`;
+                    detailBody.append(n);
+                }
+                detailSummary.textContent = `${o.totalQuantity}点 / 合計 ${yen(o.totalAmount)}`;
+
+                doneBtn.disabled = o.status === "READY";
+                doneBtn.textContent =
+                    o.status === "READY" ? "提供済み" : "準備完了";
+                doneBtn.onclick = () => {
+                    doneBtn.disabled = true;
+                    doneBtn.textContent = "処理中…";
+                    fetch(`${API_BASE}?action=ready`, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+                        body: JSON.stringify({ groupId: o.groupId }),
+                    })
+                        .then((r) => r.json())
+                        .then((_) => fetchOrders())
+                        .catch((err) => {
+                            alert(
+                                "更新に失敗しました: " +
+                                    ((err && err.message) || String(err)),
+                            );
+                            doneBtn.disabled = false;
+                            doneBtn.textContent = "準備完了";
+                        });
+                };
+            }
+
+            function fetchOrders() {
+                refreshBtn.disabled = true;
+                return fetch(`${API_BASE}?action=kitchen&limitCompleted=200`)
+                    .then((r) => r.json())
+                    .then((res) => {
+                        state.pending = res.pending || [];
+                        state.ready = res.completed || [];
+                        if (!state.selectedId) {
+                            const first = state.pending[0] || state.ready[0];
+                            if (first) state.selectedId = first.groupId;
+                        }
+                        renderList();
+                        renderDetail();
+                        refreshBtn.disabled = false;
+                    })
+                    .catch((err) => {
+                        console.error(err);
+                        refreshBtn.disabled = false;
+                        alert("注文の取得に失敗しました。");
+                    });
+            }
+
+            refreshBtn.onclick = () => fetchOrders();
+            fetchOrders();
+            setInterval(fetchOrders, 8000);
         </script>
     </body>
 </html>
