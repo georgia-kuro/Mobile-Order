@@ -316,7 +316,7 @@
             }
             .primary:disabled {
                 opacity: 0.8;
-                cursor: progress;
+                cursor: default; /* 常にノーマルカーソル */
                 box-shadow: none;
             }
 
@@ -477,7 +477,10 @@
                 color: var(--muted);
                 padding: 8px 12px; /* タッチ領域拡大 */
                 font-size: 0.9rem;
-                border-bottom: 1px solid var(--border);
+                /* 罫線を下線に変更し、文字との距離を近くする */
+                text-decoration: underline;
+                text-underline-offset: 2px;
+                text-decoration-thickness: 1px;
                 cursor: pointer;
                 align-self: center; /* 中央揃え */
                 min-height: 44px; /* タッチ領域確保 */
@@ -1042,7 +1045,8 @@
                 const total = items.reduce((s, x) => s + x.total, 0);
                 countEl.textContent = count;
                 totalEl.textContent = yen(total);
-                submitBtn.disabled = count === 0 || !seatEl.value.trim();
+                // 変更: 座席未入力でもクリックできるようにする（警告表示のため）
+                submitBtn.disabled = count === 0;
             }
 
             /* シート開閉とアクセシビリティ：フォーカス保持・トラップ・Esc対応 */
