@@ -497,6 +497,7 @@
                 cursor: pointer;
                 align-self: center; /* 中央揃え */
                 min-height: 44px; /* タッチ領域確保 */
+                margin-top: 0;
             }
             .history-list {
                 display: grid;
@@ -592,10 +593,18 @@
                 background: #fff;
                 font-size: 0.8rem;
                 line-height: 1;
+                margin-top: 0;
             }
             .credit__mark {
                 font-size: 0.8rem;
                 opacity: 0.8;
+            }
+
+            .after-seat {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 6px; /* 履歴とクレジットの間隔 */
             }
         </style>
     </head>
@@ -639,24 +648,22 @@
             </div>
 
             <!-- 注文履歴リンク（弱い見出し扱い。上下余白を確保） -->
-            <button
-                id="historyOpen"
-                class="history-link"
-                type="button"
-                aria-haspopup="dialog"
-                aria-controls="historySheet"
-                style="margin-top: 4px"
-            >
-                注文履歴
-            </button>
-
-            <div id="result" class="msg" aria-live="polite"></div>
-
-            <div class="credit" aria-label="開発クレジット">
-                <span class="credit__pill">
-                    <span class="credit__mark" aria-hidden="true">⌁</span>
-                    Powered by ICT-PARK
-                </span>
+            <div class="after-seat">
+                <button
+                    id="historyOpen"
+                    class="history-link"
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-controls="historySheet"
+                >
+                    注文履歴
+                </button>
+                <div class="credit" aria-label="開発クレジット">
+                    <span class="credit__pill">
+                        <span class="credit__mark" aria-hidden="true">⌁</span>
+                        Powered by ICT-PARK
+                    </span>
+                </div>
             </div>
 
             <div class="bottom-spacer" aria-hidden="true"></div>
