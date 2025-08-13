@@ -166,7 +166,7 @@
                 -moz-appearance: textfield;
             }
 
-            /* 座席番号 */
+            /* 座席番号（2列ピッカー対応） */
             .field {
                 display: flex;
                 flex-direction: column;
@@ -185,10 +185,13 @@
                 border: 1px solid var(--border);
                 border-radius: 10px;
                 outline: none;
-                scroll-margin-bottom: calc(var(--action-h) + var(--action-gap));
+                text-align: left;
             }
             .input:focus-visible {
                 box-shadow: var(--ring);
+            }
+            .muted {
+                color: var(--muted);
             }
 
             /* メッセージ */
@@ -253,6 +256,110 @@
                         env(safe-area-inset-bottom)
                 );
             }
+
+            /* モーダル（2列ピッカー） */
+            .modal[hidden] {
+                display: none;
+            }
+            .modal {
+                position: fixed;
+                inset: 0;
+                z-index: 100;
+            }
+            .modal__backdrop {
+                position: absolute;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.35);
+            }
+            .modal__panel {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 16px;
+                width: min(560px, 92vw);
+                max-width: 560px;
+                box-shadow: 0 24px 48px rgba(0, 0, 0, 0.18);
+                display: grid;
+                grid-template-rows: auto 1fr auto;
+                max-height: 85vh;
+            }
+            .modal__header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                padding: 12px 14px;
+                border-bottom: 1px solid var(--border);
+            }
+            .modal__title {
+                font-weight: 800;
+            }
+            .modal__close {
+                appearance: none;
+                border: 1px solid var(--border);
+                background: #fff;
+                color: var(--text);
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                cursor: pointer;
+                font-size: 18px;
+                line-height: 1;
+            }
+            .picker {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding: 12px 14px;
+            }
+            .picker__col {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                gap: 8px;
+                min-width: 0;
+            }
+            .picker__label {
+                color: var(--muted);
+                font-size: 0.92rem;
+            }
+            .picker__select {
+                width: 100%;
+                min-height: 220px; /* ホイールっぽく見えるように複数行表示 */
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 8px;
+                font-size: 1.05rem;
+                background: #fff;
+                outline: none;
+            }
+            .picker__select:focus-visible {
+                box-shadow: var(--ring);
+            }
+            .modal__footer {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 14px;
+                border-top: 1px solid var(--border);
+            }
+            .btn--ghost {
+                appearance: none;
+                border: 1px solid var(--border);
+                background: #fff;
+                color: var(--text);
+                padding: 10px 14px;
+                border-radius: 10px;
+                cursor: pointer;
+            }
+            .spacer {
+                flex: 1 1 auto;
+            }
+            .no-scroll {
+                overflow: hidden;
+            }
         </style>
     </head>
     <body>
@@ -267,19 +374,80 @@
             <div id="list" class="list" aria-live="polite">読み込み中…</div>
 
             <div class="field">
-                <label for="seat">座席番号</label>
-                <input
-                    id="seat"
+                <label for="seatOpen">座席番号</label>
+                <button
+                    id="seatOpen"
                     class="input"
-                    type="text"
-                    placeholder="例：A-12"
-                    required
-                />
+                    type="button"
+                    aria-haspopup="dialog"
+                    aria-controls="seatModal"
+                >
+                    <span id="seatDisplay" class="muted">座席を選択</span>
+                </button>
+                <input id="seat" type="hidden" />
             </div>
 
             <div id="result" class="msg" aria-live="polite"></div>
 
             <div class="bottom-spacer" aria-hidden="true"></div>
+        </div>
+
+        <!-- 2列ピッカーモーダル -->
+        <div
+            id="seatModal"
+            class="modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seatTitle"
+            hidden
+        >
+            <div class="modal__backdrop" id="seatBackdrop"></div>
+            <div class="modal__panel" role="document">
+                <div class="modal__header">
+                    <div class="modal__title" id="seatTitle">座席を選択</div>
+                    <button
+                        class="modal__close"
+                        id="seatClose"
+                        aria-label="閉じる"
+                    >
+                        ×
+                    </button>
+                </div>
+                <div class="picker">
+                    <div class="picker__col">
+                        <label class="picker__label" for="areaSelect"
+                            >エリア</label
+                        >
+                        <select
+                            id="areaSelect"
+                            class="picker__select"
+                            size="7"
+                        ></select>
+                    </div>
+                    <div class="picker__col">
+                        <label class="picker__label" for="numberSelect"
+                            >番号</label
+                        >
+                        <select
+                            id="numberSelect"
+                            class="picker__select"
+                            size="7"
+                        ></select>
+                    </div>
+                </div>
+                <div class="modal__footer">
+                    <button id="seatClear" class="btn--ghost" type="button">
+                        クリア
+                    </button>
+                    <div class="spacer"></div>
+                    <button id="seatCancel" class="btn--ghost" type="button">
+                        キャンセル
+                    </button>
+                    <button id="seatOk" class="primary" type="button" disabled>
+                        決定
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div
@@ -300,11 +468,37 @@
                 "https://script.google.com/macros/s/AKfycbx13V768FI1C79iewAv8q5j5dp-EB1gOzh0UurwnGnEoEiud8cpzSBmAeALs8HW8R893w/exec"; // ←置き換え
             const list = document.getElementById("list");
             const seatEl = document.getElementById("seat");
+            const seatOpen = document.getElementById("seatOpen");
+            const seatDisplay = document.getElementById("seatDisplay");
+            const seatModal = document.getElementById("seatModal");
+            const seatBackdrop = document.getElementById("seatBackdrop");
+            const seatClose = document.getElementById("seatClose");
+            const seatCancel = document.getElementById("seatCancel");
+            const seatOk = document.getElementById("seatOk");
+            const seatClear = document.getElementById("seatClear");
+            const areaSelect = document.getElementById("areaSelect");
+            const numberSelect = document.getElementById("numberSelect");
+
             const submitBtn = document.getElementById("submitBtn");
             const result = document.getElementById("result");
             const actionBar = document.getElementById("actionBar");
             const countEl = document.getElementById("count");
             const totalEl = document.getElementById("total");
+
+            const AREAS = [
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+            ];
+            const NUMS = Array.from({ length: 21 }, (_, i) => String(i + 1));
 
             const yen = (n) => "¥" + Number(n || 0).toLocaleString("ja-JP");
 
@@ -423,6 +617,90 @@
                         '<div class="msg msg--error">メニュー読み込みに失敗しました。</div>';
                 });
 
+            // 座席ピッカー初期化
+            function populateSeatOptions() {
+                if (!areaSelect.options.length) {
+                    AREAS.forEach((a) => {
+                        const opt = document.createElement("option");
+                        opt.value = a;
+                        opt.textContent = a;
+                        areaSelect.append(opt);
+                    });
+                }
+                if (!numberSelect.options.length) {
+                    NUMS.forEach((n) => {
+                        const opt = document.createElement("option");
+                        opt.value = n;
+                        opt.textContent = n;
+                        numberSelect.append(opt);
+                    });
+                }
+            }
+
+            function openSeatModal() {
+                populateSeatOptions();
+                // 既存値を分解
+                const v = seatEl.value.trim();
+                let curA = "",
+                    curN = "";
+                if (v && /^[A-K]-([1-9]|1\d|2[01])$/.test(v)) {
+                    const [a, n] = v.split("-");
+                    curA = a;
+                    curN = n;
+                }
+                areaSelect.value = curA || "";
+                numberSelect.value = curN || "";
+                seatOk.disabled = !(areaSelect.value && numberSelect.value);
+
+                seatModal.hidden = false;
+                document.body.classList.add("no-scroll");
+                // フォーカス
+                (areaSelect.value ? numberSelect : areaSelect).focus();
+            }
+            function closeSeatModal() {
+                seatModal.hidden = true;
+                document.body.classList.remove("no-scroll");
+                seatOpen.focus();
+            }
+
+            seatOpen.addEventListener("click", openSeatModal);
+            seatBackdrop.addEventListener("click", closeSeatModal);
+            seatClose.addEventListener("click", closeSeatModal);
+            seatCancel.addEventListener("click", closeSeatModal);
+            window.addEventListener("keydown", (e) => {
+                if (!seatModal.hidden && e.key === "Escape") {
+                    e.preventDefault();
+                    closeSeatModal();
+                }
+            });
+
+            areaSelect.addEventListener("change", () => {
+                seatOk.disabled = !(areaSelect.value && numberSelect.value);
+            });
+            numberSelect.addEventListener("change", () => {
+                seatOk.disabled = !(areaSelect.value && numberSelect.value);
+            });
+
+            seatOk.addEventListener("click", () => {
+                if (!(areaSelect.value && numberSelect.value)) return;
+                const seatStr = `${areaSelect.value}-${numberSelect.value}`;
+                seatEl.value = seatStr;
+                seatDisplay.textContent = `座席 ${seatStr}`;
+                seatDisplay.classList.remove("muted");
+                updateSummary();
+                closeSeatModal();
+            });
+
+            seatClear.addEventListener("click", () => {
+                areaSelect.value = "";
+                numberSelect.value = "";
+                seatEl.value = "";
+                seatDisplay.textContent = "座席を選択";
+                seatDisplay.classList.add("muted");
+                seatOk.disabled = true;
+                updateSummary();
+            });
+
             // 注文送信（プリフライト回避のため text/plain）
             submitBtn.addEventListener("click", () => {
                 const items = collectOrder();
@@ -433,10 +711,10 @@
                     return;
                 }
                 if (!seat) {
-                    result.textContent = "座席番号を入力してください。";
+                    result.textContent = "座席番号を選択してください。";
                     result.className = "msg msg--error";
-                    seatEl.focus();
-                    seatEl.scrollIntoView({
+                    seatOpen.focus();
+                    seatOpen.scrollIntoView({
                         behavior: "smooth",
                         block: "center",
                     });
@@ -463,6 +741,9 @@
                         document.querySelectorAll(".btn").forEach((b) => {
                             if (b.textContent === "−") b.disabled = true;
                         });
+                        // 座席は残す（連続注文向け）。リセットしたい場合は以下2行を有効化。
+                        // seatEl.value = "";
+                        // seatDisplay.textContent = "座席を選択"; seatDisplay.classList.add("muted");
                         updateSummary();
                         window.scrollTo({ top: 0, behavior: "smooth" });
                     })
