@@ -377,6 +377,7 @@
                 padding: 10px 12px;
                 border-bottom: 1px solid var(--border);
                 gap: 8px;
+                min-height: 64px; /* ヘッダーの高さを全シートで統一 */
             }
             .sheet__title {
                 font-weight: 800;
@@ -413,6 +414,7 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                font-size: 1rem; /* フォントサイズを .primary と統一 */
             }
 
             /* ピッカー固有（座席） */
@@ -1045,7 +1047,7 @@
                 const total = items.reduce((s, x) => s + x.total, 0);
                 countEl.textContent = count;
                 totalEl.textContent = yen(total);
-                // 変更: 座席未入力でもクリックできるようにする（警告表示のため）
+                // 座席未入力でもクリックできる（警告表示のため）
                 submitBtn.disabled = count === 0;
             }
 
