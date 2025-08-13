@@ -576,6 +576,27 @@
                     transform: rotate(360deg);
                 }
             }
+
+            .credit {
+                text-align: center;
+                margin-top: 8px;
+            }
+            .credit__pill {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px;
+                border: 1px solid var(--border);
+                border-radius: 999px;
+                color: var(--muted);
+                background: #fff;
+                font-size: 0.9rem;
+                line-height: 1;
+            }
+            .credit__mark {
+                font-size: 0.9rem;
+                opacity: 0.8;
+            }
         </style>
     </head>
     <body>
@@ -630,6 +651,13 @@
             </button>
 
             <div id="result" class="msg" aria-live="polite"></div>
+
+            <div class="credit" aria-label="開発クレジット">
+                <span class="credit__pill">
+                    <span class="credit__mark" aria-hidden="true">⌁</span>
+                    Powered by ICT-PARK
+                </span>
+            </div>
 
             <div class="bottom-spacer" aria-hidden="true"></div>
         </div>
