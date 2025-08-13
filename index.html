@@ -455,6 +455,49 @@
             .seat-note {
                 color: var(--muted);
             }
+
+            /* 注文履歴リンクと履歴UI */
+            .history-link {
+                appearance: none;
+                background: none;
+                border: none;
+                color: var(--muted);
+                padding: 4px 0;
+                font-size: 0.9rem;
+                border-bottom: 1px solid var(--border);
+                cursor: pointer;
+                align-self: flex-start;
+            }
+            .history-list {
+                display: grid;
+                gap: 10px;
+            }
+            .h-item {
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 10px 12px;
+                background: #fff;
+            }
+            .h-head {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 10px;
+                margin-bottom: 6px;
+                border-bottom: 1px dashed #e5e7eb;
+                padding-bottom: 6px;
+            }
+            .h-seat {
+                font-weight: 800;
+            }
+            .h-meta {
+                color: var(--muted);
+                font-size: 0.9rem;
+                white-space: nowrap;
+            }
+            .h-empty {
+                color: var(--muted);
+            }
         </style>
     </head>
     <body>
@@ -485,6 +528,11 @@
                 </button>
                 <input id="seat" type="hidden" />
             </div>
+
+            <!-- 注文履歴リンク -->
+            <button id="historyOpen" class="history-link" type="button">
+                注文履歴
+            </button>
 
             <div id="result" class="msg" aria-live="polite"></div>
 
@@ -608,6 +656,40 @@
             </div>
         </div>
 
+        <!-- 注文履歴（表示のみ。右上＝全消去／下＝閉じる） -->
+        <div
+            id="historySheet"
+            class="sheet"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="historyTitle"
+            hidden
+        >
+            <div class="sheet__backdrop" id="historyBackdrop"></div>
+            <div class="sheet__panel" role="document">
+                <div class="sheet__header">
+                    <div class="sheet__title" id="historyTitle">注文履歴</div>
+                    <div class="sheet__actions">
+                        <button
+                            id="historyClear"
+                            class="btn--ghost"
+                            type="button"
+                        >
+                            履歴を削除
+                        </button>
+                    </div>
+                </div>
+                <div class="sheet__content">
+                    <div id="historyList" class="history-list"></div>
+                </div>
+                <div class="sheet__footer">
+                    <button id="historyClose" class="btn--ghost" type="button">
+                        閉じる
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- 入力用 下部バー -->
         <div
             class="action"
@@ -657,6 +739,14 @@
             const resultList = document.getElementById("resultList");
             const resultBack = document.getElementById("resultBack");
             const resultClose = document.getElementById("resultClose");
+
+            // 履歴
+            const historyOpen = document.getElementById("historyOpen");
+            const historySheet = document.getElementById("historySheet");
+            const historyBackdrop = document.getElementById("historyBackdrop");
+            const historyClose = document.getElementById("historyClose");
+            const historyClear = document.getElementById("historyClear");
+            const historyList = document.getElementById("historyList");
 
             const actionBar = document.getElementById("actionBar");
             const submitBtn = document.getElementById("submitBtn");
@@ -1006,6 +1096,107 @@
                 container.append(sum);
             }
 
+            /* 履歴ユーティリティ */
+            const HISTORY_LS_KEY = "mo.orderHistory.v1";
+            const HISTORY_MAX = 20;
+
+            function safeGetItem(key) {
+                try {
+                    return localStorage.getItem(key);
+                } catch (e) {
+                    return null;
+                }
+            }
+            function safeSetItem(key, val) {
+                try {
+                    localStorage.setItem(key, val);
+                } catch (e) {}
+            }
+            function loadHistory() {
+                const raw = safeGetItem(HISTORY_LS_KEY);
+                if (!raw) return [];
+                try {
+                    const arr = JSON.parse(raw);
+                    return Array.isArray(arr) ? arr : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+            function saveHistory(arr) {
+                safeSetItem(HISTORY_LS_KEY, JSON.stringify(arr || []));
+            }
+            function addHistoryEntry(entry) {
+                const list = loadHistory();
+                list.unshift(entry);
+                saveHistory(list.slice(0, HISTORY_MAX));
+            }
+            function fmtYmdHM(ts) {
+                try {
+                    const d = new Date(ts);
+                    if (isNaN(d.getTime())) return "--/-- --:--";
+                    const y = d.getFullYear();
+                    const M = String(d.getMonth() + 1).padStart(2, "0");
+                    const D = String(d.getDate()).padStart(2, "0");
+                    const h = String(d.getHours()).padStart(2, "0");
+                    const m = String(d.getMinutes()).padStart(2, "0");
+                    return `${y}-${M}-${D} ${h}:${m}`;
+                } catch (e) {
+                    return "--/-- --:--";
+                }
+            }
+            function renderHistorySheet() {
+                const hist = loadHistory();
+                historyList.innerHTML = "";
+                if (!hist.length) {
+                    const d = document.createElement("div");
+                    d.className = "h-empty";
+                    d.textContent = "この端末での注文履歴はありません。";
+                    historyList.append(d);
+                    return;
+                }
+                hist.forEach((h) => {
+                    const box = document.createElement("div");
+                    box.className = "h-item";
+
+                    const head = document.createElement("div");
+                    head.className = "h-head";
+                    const seat = document.createElement("div");
+                    seat.className = "h-seat";
+                    seat.textContent = h.seat
+                        ? `座席 ${h.seat}`
+                        : "テイクアウト";
+                    const meta = document.createElement("div");
+                    meta.className = "h-meta";
+                    meta.textContent = fmtYmdHM(h.ts);
+                    head.append(seat, meta);
+
+                    const body = document.createElement("div");
+                    const blist = document.createElement("div");
+                    blist.className = "brief-list";
+                    buildSummary(blist, h.items || []);
+                    body.append(blist);
+
+                    box.append(head, body);
+                    historyList.append(box);
+                });
+            }
+
+            historyOpen.addEventListener("click", () => {
+                renderHistorySheet();
+                openSheet(historySheet);
+            });
+            historyBackdrop.addEventListener("click", () =>
+                closeSheet(historySheet),
+            );
+            historyClose.addEventListener("click", () =>
+                closeSheet(historySheet),
+            );
+            historyClear.addEventListener("click", () => {
+                if (!confirm("履歴をすべて削除しますか？")) return;
+                saveHistory([]);
+                renderHistorySheet();
+            });
+
             /* 1回目：注文ボタン → 確認シート */
             submitBtn.addEventListener("click", () => {
                 const items = collectOrderDetailed();
@@ -1066,6 +1257,25 @@
                     .then((r) => r.json())
                     .then((res) => {
                         if (!res.ok) throw new Error(res.error || "failed");
+
+                        // 履歴へ保存（lastOrderSnapshot を利用）
+                        try {
+                            const entry = {
+                                ts: Date.now(),
+                                seat: lastOrderSnapshot.seat || "",
+                                items: (lastOrderSnapshot.items || []).map(
+                                    (x) => ({
+                                        name: x.name,
+                                        quantity: x.quantity,
+                                        price: x.price,
+                                        total: x.total,
+                                        itemId: x.itemId || null,
+                                    }),
+                                ),
+                                groupId: res.groupId || null,
+                            };
+                            addHistoryEntry(entry);
+                        } catch (e) {}
 
                         // 入力をリセット（座席は保持）
                         document
